@@ -47,9 +47,9 @@ export async function PUT(request: NextRequest, { params }: { params: { gameId: 
   try {
     const userId = getUserId(request)
     const { gameId, playthroughId } = params
-    const { results } = await request.json()
+    const { results, date } = await request.json()
 
-    console.log("Updating playthrough:", playthroughId, "with results:", results)
+    console.log("Updating playthrough:", playthroughId, "with results:", results, "date:", date)
 
     if (!results || !Array.isArray(results) || results.length === 0) {
       return NextResponse.json({ success: false, error: "Results are required" }, { status: 400 })
@@ -94,6 +94,19 @@ export async function PUT(request: NextRequest, { params }: { params: { gameId: 
           { success: false, error: "Ranks must be consecutive starting from 1st place" },
           { status: 400 },
         )
+      }
+    }
+
+    // Update playthrough timestamp if date is provided
+    if (date) {
+      const dateObj = new Date(date)
+      if (!isNaN(dateObj.getTime())) {
+        await sql`
+          UPDATE playthroughs
+          SET timestamp = ${dateObj.toISOString()}
+          WHERE id = ${playthroughId}
+        `
+        console.log("Updated playthrough date to:", dateObj.toISOString())
       }
     }
 
@@ -172,13 +185,13 @@ export async function PUT(request: NextRequest, { params }: { params: { gameId: 
           ${rank},
           ${result.leaderId || null},
           ${leaderName},
-          ${result.finalVp || null},
-          ${result.finalResourcesSpice || null},
-          ${result.finalResourcesSolari || null},
-          ${result.finalResourcesWater || null},
-          ${result.finalResourcesTroops || null},
-          ${result.cardsTrashed || null},
-          ${result.finalDeckSize || null},
+          ${result.finalVp !== undefined ? result.finalVp : null},
+          ${result.finalResourcesSpice !== undefined ? result.finalResourcesSpice : null},
+          ${result.finalResourcesSolari !== undefined ? result.finalResourcesSolari : null},
+          ${result.finalResourcesWater !== undefined ? result.finalResourcesWater : null},
+          ${result.finalResourcesTroops !== undefined ? result.finalResourcesTroops : null},
+          ${result.cardsTrashed !== undefined ? result.cardsTrashed : null},
+          ${result.finalDeckSize !== undefined ? result.finalDeckSize : null},
           ${result.strategicArchetypeId || null},
           ${archetypeName}
         )
