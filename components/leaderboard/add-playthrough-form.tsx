@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { PlusCircle, Trash2, Users, UserPlus, Loader2, CheckCircle } from "lucide-react"
+import { PlusCircle, Trash2, Users, UserPlus, Loader2, CheckCircle, Calendar } from "lucide-react"
 import type { Player } from "@/types/leaderboard"
 import { getOrdinalSuffix } from "@/utils/leaderboard-utils"
 
@@ -17,7 +17,7 @@ interface AddPlaythroughFormProps {
   gameId: string
   gameName: string
   existingPlayers: Player[]
-  onSubmit: (results: { playerName: string; rank: number }[]) => Promise<void>
+  onSubmit: (results: { playerName: string; rank: number }[], date?: string) => Promise<void>
 }
 
 interface PlayerRankInput {
@@ -28,10 +28,20 @@ interface PlayerRankInput {
 }
 
 export const AddPlaythroughForm = ({ gameId, gameName, existingPlayers, onSubmit }: AddPlaythroughFormProps) => {
+  // Initialize date to today's date in YYYY-MM-DD format
+  const getTodayDate = () => {
+    const today = new Date()
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, "0")
+    const day = String(today.getDate()).padStart(2, "0")
+    return `${year}-${month}-${day}`
+  }
+
   const [playerRanks, setPlayerRanks] = useState<PlayerRankInput[]>([
     { id: crypto.randomUUID(), playerName: "", rank: "1", isNewPlayer: true },
     { id: crypto.randomUUID(), playerName: "", rank: "2", isNewPlayer: true },
   ])
+  const [gameDate, setGameDate] = useState<string>(getTodayDate())
   const [error, setError] = useState<string | null>(null)
   const [showPlayerSuggestions, setShowPlayerSuggestions] = useState<{ [key: string]: boolean }>({})
   const [submitting, setSubmitting] = useState(false)
@@ -138,8 +148,8 @@ export const AddPlaythroughForm = ({ gameId, gameName, existingPlayers, onSubmit
 
     setSubmitting(true)
     try {
-      console.log("Submitting playthrough with results:", results)
-      await onSubmit(results)
+      console.log("Submitting playthrough with results:", results, "date:", gameDate)
+      await onSubmit(results, gameDate)
 
       // Show success state briefly
       setSubmitSuccess(true)
@@ -150,6 +160,7 @@ export const AddPlaythroughForm = ({ gameId, gameName, existingPlayers, onSubmit
         { id: crypto.randomUUID(), playerName: "", rank: "1", isNewPlayer: true },
         { id: crypto.randomUUID(), playerName: "", rank: "2", isNewPlayer: true },
       ])
+      setGameDate(getTodayDate())
     } catch (err: any) {
       console.error("Error submitting playthrough:", err)
       setError(err.message || "Failed to submit playthrough. Please try again.")
@@ -184,6 +195,24 @@ export const AddPlaythroughForm = ({ gameId, gameName, existingPlayers, onSubmit
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Date Selection */}
+          <div className="grid gap-1.5">
+            <Label htmlFor="game-date" className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              Game Date
+            </Label>
+            <Input
+              id="game-date"
+              type="date"
+              value={gameDate}
+              onChange={(e) => setGameDate(e.target.value)}
+              disabled={submitting}
+              className="w-full max-w-xs"
+              required
+            />
+            <p className="text-xs text-muted-foreground">Select the date when this game was played</p>
+          </div>
+
           {playerRanks.map((playerRank, index) => {
             const suggestions = getFilteredPlayerSuggestions(playerRank.playerName)
             const showSuggestions = showPlayerSuggestions[playerRank.id] && suggestions.length > 0

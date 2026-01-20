@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, Trash2, Crown, Users, BarChart3 } from "lucide-react"
+import { Plus, Trash2, Crown, Users, BarChart3, Calendar } from "lucide-react"
 import { Spinner } from "@/components/ui/spinner"
 import { Badge } from "@/components/ui/badge"
 
@@ -43,7 +43,7 @@ interface PlayerResult {
 interface EnhancedAddPlaythroughFormProps {
   game: any
   players: any[]
-  onSubmit: (results: PlayerResult[]) => void
+  onSubmit: (results: PlayerResult[], date?: string) => void
   onCancel: () => void
 }
 
@@ -58,7 +58,17 @@ const factionIcons: Record<string, string> = {
 }
 
 export const EnhancedAddPlaythroughForm = ({ game, players, onSubmit, onCancel }: EnhancedAddPlaythroughFormProps) => {
+  // Initialize date to today's date in YYYY-MM-DD format
+  const getTodayDate = () => {
+    const today = new Date()
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, "0")
+    const day = String(today.getDate()).padStart(2, "0")
+    return `${year}-${month}-${day}`
+  }
+
   const [results, setResults] = useState<PlayerResult[]>([{ playerName: "", rank: 1 }])
+  const [gameDate, setGameDate] = useState<string>(getTodayDate())
   const [leaders, setLeaders] = useState<Leader[]>([])
   const [archetypes, setArchetypes] = useState<StrategicArchetype[]>([])
   const [loading, setLoading] = useState(false)
@@ -154,9 +164,10 @@ export const EnhancedAddPlaythroughForm = ({ game, players, onSubmit, onCancel }
         }
       })
 
-      await onSubmit(resultsWithPlayerIds)
+      await onSubmit(resultsWithPlayerIds, gameDate)
       // Reset form
       setResults([{ playerName: "", rank: 1 }])
+      setGameDate(getTodayDate())
       setActiveTab("basic")
     } catch (error) {
       console.error("Failed to submit playthrough:", error)
@@ -186,6 +197,24 @@ export const EnhancedAddPlaythroughForm = ({ game, players, onSubmit, onCancel }
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Date Selection */}
+          <div className="grid gap-1.5">
+            <Label htmlFor="game-date" className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              Game Date
+            </Label>
+            <Input
+              id="game-date"
+              type="date"
+              value={gameDate}
+              onChange={(e) => setGameDate(e.target.value)}
+              disabled={loading}
+              className="w-full max-w-xs"
+              required
+            />
+            <p className="text-xs text-muted-foreground">Select the date when this game was played</p>
+          </div>
+
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="basic" className="flex items-center">

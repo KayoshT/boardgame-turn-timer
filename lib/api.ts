@@ -138,12 +138,12 @@ export const playthroughApi = {
     }
   },
 
-  async createPlaythrough(gameId: string, results: any[]): Promise<ApiResponse<any>> {
+  async createPlaythrough(gameId: string, results: any[], date?: string): Promise<ApiResponse<any>> {
     try {
       const response = await fetch(`${API_BASE}/games/${gameId}/playthroughs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ results }),
+        body: JSON.stringify({ results, date }),
       })
 
       const data = await response.json()
@@ -154,12 +154,12 @@ export const playthroughApi = {
     }
   },
 
-  async updatePlaythrough(gameId: string, playthroughId: string, results: any[]): Promise<ApiResponse<any>> {
+  async updatePlaythrough(gameId: string, playthroughId: string, results: any[], date?: string): Promise<ApiResponse<any>> {
     try {
       const response = await fetch(`${API_BASE}/games/${gameId}/playthroughs/${playthroughId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ results }),
+        body: JSON.stringify({ results, date }),
       })
 
       const data = await response.json()

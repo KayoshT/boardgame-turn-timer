@@ -9,14 +9,14 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { PlusCircle, Trash2, UserPlus, Loader2, CheckCircle, Edit } from "lucide-react"
+import { PlusCircle, Trash2, UserPlus, Loader2, CheckCircle, Edit, Calendar } from "lucide-react"
 import type { Player } from "@/types/leaderboard"
 import { getOrdinalSuffix } from "@/utils/leaderboard-utils"
 
 interface EditPlaythroughFormProps {
   playthrough: any
   existingPlayers: Player[]
-  onSubmit: (results: { playerName: string; rank: number }[]) => Promise<void>
+  onSubmit: (results: { playerName: string; rank: number }[], date?: string) => Promise<void>
   onCancel: () => void
 }
 
@@ -37,7 +37,18 @@ interface PlayerRankInput {
 }
 
 export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, onCancel }: EditPlaythroughFormProps) => {
+  // Helper to format date from ISO string to YYYY-MM-DD format
+  const formatDateForInput = (dateString: string) => {
+    if (!dateString) return ""
+    const date = new Date(dateString)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, "0")
+    const day = String(date.getDate()).padStart(2, "0")
+    return `${year}-${month}-${day}`
+  }
+
   const [playerRanks, setPlayerRanks] = useState<PlayerRankInput[]>([])
+  const [gameDate, setGameDate] = useState<string>("")
   const [error, setError] = useState<string | null>(null)
   const [showPlayerSuggestions, setShowPlayerSuggestions] = useState<{ [key: string]: boolean }>({})
   const [submitting, setSubmitting] = useState(false)
@@ -50,6 +61,11 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
   useEffect(() => {
     if (playthrough?.results) {
       console.log("Initializing edit form with playthrough data:", playthrough)
+
+      // Initialize date from playthrough timestamp
+      if (playthrough.timestamp) {
+        setGameDate(formatDateForInput(playthrough.timestamp))
+      }
 
       const initialRanks = playthrough.results
         .sort((a: any, b: any) => a.rank - b.rank)
@@ -250,8 +266,8 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
 
     setSubmitting(true)
     try {
-      console.log("Updating playthrough with results:", results)
-      await onSubmit(results)
+      console.log("Updating playthrough with results:", results, "date:", gameDate)
+      await onSubmit(results, gameDate)
 
       // Show success state briefly
       setSubmitSuccess(true)
@@ -299,6 +315,24 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Date Selection */}
+          <div className="grid gap-1.5">
+            <Label htmlFor="game-date" className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              Game Date
+            </Label>
+            <Input
+              id="game-date"
+              type="date"
+              value={gameDate}
+              onChange={(e) => setGameDate(e.target.value)}
+              disabled={submitting}
+              className="w-full max-w-xs"
+              required
+            />
+            <p className="text-xs text-muted-foreground">Select the date when this game was played</p>
+          </div>
+
           {playerRanks.map((playerRank, index) => {
             const suggestions = getFilteredPlayerSuggestions(playerRank.playerName)
             const showSuggestions = showPlayerSuggestions[playerRank.id] && suggestions.length > 0

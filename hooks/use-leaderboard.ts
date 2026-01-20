@@ -253,11 +253,12 @@ export const useLeaderboard = () => {
   const addPlaythrough = async (
     gameId: string,
     results: { playerName: string; rank: number }[],
+    date?: string,
   ): Promise<Playthrough> => {
     console.time("Add Playthrough")
-    console.log("Adding playthrough for game:", gameId, "with results:", results)
+    console.log("Adding playthrough for game:", gameId, "with results:", results, "date:", date)
 
-    const response = await playthroughApi.createPlaythrough(gameId, results)
+    const response = await playthroughApi.createPlaythrough(gameId, results, date)
     console.timeEnd("Add Playthrough")
 
     if (!response.success || !response.data) {
@@ -287,11 +288,12 @@ export const useLeaderboard = () => {
     gameId: string,
     playthroughId: string,
     results: { playerName: string; rank: number }[],
+    date?: string,
   ): Promise<void> => {
     console.time("Update Playthrough")
-    console.log("Updating playthrough:", playthroughId, "with results:", results)
+    console.log("Updating playthrough:", playthroughId, "with results:", results, "date:", date)
 
-    const response = await playthroughApi.updatePlaythrough(gameId, playthroughId, results)
+    const response = await playthroughApi.updatePlaythrough(gameId, playthroughId, results, date)
     console.timeEnd("Update Playthrough")
 
     if (!response.success) {

@@ -18,9 +18,9 @@ interface LeaderboardViewProps {
   existingPlayers: any[]
   playthroughs: any[]
   currentSeasonSummary: SeasonSummary | null
-  onAddPlaythrough: (gameId: string, results: any[]) => void
+  onAddPlaythrough: (gameId: string, results: any[], date?: string) => void
   onDeletePlaythrough: (gameId: string, playthroughId: string) => Promise<boolean>
-  onUpdatePlaythrough: (gameId: string, playthroughId: string, results: any[]) => Promise<void>
+  onUpdatePlaythrough: (gameId: string, playthroughId: string, results: any[], date?: string) => Promise<void>
   onConcludeSeason: () => Promise<void>
   onFetchSeasons: (groupId: string) => Promise<any[]>
   onFetchSeasonBadges: (groupId: string, seasonId: string) => Promise<any[]>
@@ -68,16 +68,16 @@ export const LeaderboardView = ({
 
   const { game, rankings } = leaderboardData
 
-  const handlePlaythroughSubmit = (results: any[]) => {
-    onAddPlaythrough(game.id, results)
+  const handlePlaythroughSubmit = (results: any[], date?: string) => {
+    onAddPlaythrough(game.id, results, date)
   }
 
   const handleDeletePlaythrough = async (playthroughId: string) => {
     return await onDeletePlaythrough(game.id, playthroughId)
   }
 
-  const handleUpdatePlaythrough = async (playthroughId: string, results: any[]) => {
-    await onUpdatePlaythrough(game.id, playthroughId, results)
+  const handleUpdatePlaythrough = async (playthroughId: string, results: any[], date?: string) => {
+    await onUpdatePlaythrough(game.id, playthroughId, results, date)
   }
 
   // Check if this is a Dune game

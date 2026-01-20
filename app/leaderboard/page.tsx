@@ -98,10 +98,10 @@ export default function LeaderboardPage() {
     }
   }
 
-  const handleAddPlaythrough = async (gameId: string, results: any[]) => {
+  const handleAddPlaythrough = async (gameId: string, results: any[], date?: string) => {
     try {
-      console.log("Page: Adding playthrough for game:", gameId)
-      await addPlaythrough(gameId, results)
+      console.log("Page: Adding playthrough for game:", gameId, "date:", date)
+      await addPlaythrough(gameId, results, date)
       toast.success(`Playthrough recorded successfully!`)
     } catch (e: any) {
       console.error("Page: Error adding playthrough:", e)
@@ -110,10 +110,10 @@ export default function LeaderboardPage() {
     }
   }
 
-  const handleUpdatePlaythrough = async (gameId: string, playthroughId: string, results: any[]) => {
+  const handleUpdatePlaythrough = async (gameId: string, playthroughId: string, results: any[], date?: string) => {
     try {
-      console.log("Page: Updating playthrough:", playthroughId)
-      await updatePlaythrough(gameId, playthroughId, results)
+      console.log("Page: Updating playthrough:", playthroughId, "date:", date)
+      await updatePlaythrough(gameId, playthroughId, results, date)
       toast.success(`Playthrough updated successfully!`)
     } catch (e: any) {
       console.error("Page: Error updating playthrough:", e)
