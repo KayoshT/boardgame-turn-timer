@@ -48,13 +48,24 @@ interface EnhancedAddPlaythroughFormProps {
 }
 
 const factionIcons: Record<string, string> = {
-  "Spacing Guild": "🚀",
-  Fremen: "🏜️",
-  "House Harkonnen": "⚔️",
-  "Bene Gesserit": "🔮",
-  Ixians: "⚙️",
+  // Great Houses
   "House Atreides": "🦅",
-  Emperor: "👑",
+  "House Harkonnen": "⚔️",
+  "House Corrino": "👑",
+  "House Richese": "💡",
+  "House Thorvald": "❄️",
+  "House Vernius": "🦾",
+  "House Ecaz": "🌺",
+  "House Moritani": "🦂",
+  "House Metulli": "💎",
+  "House Fenring": "🎭",
+
+  // Factions and Guilds
+  "Bene Gesserit": "🔮",
+  "Fremen": "🏜️",
+  "Spacing Guild": "🚀",
+  "Smugglers": "💰",
+  "Ixian": "⚙️",
 }
 
 export const EnhancedAddPlaythroughForm = ({ game, players, onSubmit, onCancel }: EnhancedAddPlaythroughFormProps) => {
