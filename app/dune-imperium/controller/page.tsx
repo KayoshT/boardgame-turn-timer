@@ -94,7 +94,14 @@ export default function Controller() {
                                 {activePlayer?.name ?? "Waiting for host…"}
                             </div>
                             {timeRemaining != null && (
-                                <div className="mt-1 text-xl font-mono text-amber-900">
+                                <div
+                                    className={`mt-1 text-4xl font-semibold font-mono ${timeRemaining < 60
+                                        ? "text-red-600"
+                                        : timeRemaining < 180
+                                            ? "text-orange-600"
+                                            : "text-green-600"
+                                        }`}
+                                >
                                     {formatTime(timeRemaining)}
                                 </div>
                             )}
