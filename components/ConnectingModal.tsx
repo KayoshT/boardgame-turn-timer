@@ -5,7 +5,7 @@ import {
 import { Spinner } from "./ui/spinner"
 
 
-export default function ConnecttingModal({
+export default function ConnectingModal({
     open,
 }: { open: boolean }) {
 
