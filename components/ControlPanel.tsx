@@ -3,7 +3,7 @@
 import { Play, Pause, RotateCcw, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { QRCodeCanvas } from "qrcode.react"
+import JoinRoomModal from "./JoinRoomModal"
 
 interface ControlPanelProps {
     isRunning: boolean
@@ -71,7 +71,8 @@ export const ControlPanel = ({
                         End Round
                     </Button>
 
-                    <Button onClick={onReset} size="lg" variant="outline" className="border-red-400 text-red-600 hover:bg-red-50">
+
+                    <Button onClick={onReset} size="lg" variant="outline" className="border-red-400 text-red-600 hover:bg-red-50 hover:text-red-700">
                         <RotateCcw className="w-5 h-5 mr-2" />
                         Reset
                     </Button>
@@ -87,13 +88,13 @@ export const ControlPanel = ({
                             Settings
                         </Button>
                     )}
-                    <QRCodeCanvas
-                        value={`${process.env.NEXT_PUBLIC_APP_URL}/dune-imperium/controller/${roomCode}`}
-                        size={40}
-                        bgColor="transparent"
-                        fgColor="#74531d"
-                        level="M"
-                    />
+
+                    <JoinRoomModal roomCode={roomCode}>
+                        <Button size="lg" variant="outline" className="border-orange-400 text-orange-600 hover:bg-orange-50 hover:text-orange-700">
+                            Join Room
+                        </Button>
+                    </JoinRoomModal>
+
                 </div>
                 <div className="text-center mt-4 text-sm text-amber-700">
                     <p>

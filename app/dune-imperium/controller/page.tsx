@@ -7,6 +7,8 @@ import { useSocket } from "@/hooks/useSocket"
 import { formatTime } from "@/utils"
 import { HostState } from "@/types"
 import { useSearchParams } from "next/navigation"
+import ConnectingModal from "@/components/ConnectingModal"
+import useThrottledEmit from "@/hooks/useThrottledEmit"
 
 
 export default function Controller() {
@@ -16,6 +18,8 @@ export default function Controller() {
 
     const { connected, emit, on, off, socket } = useSocket()
     const lastJoinedSocketId = useRef<string | null>(null)
+
+    const throttledEmit = useThrottledEmit(emit)
 
     const [hostState, setHostState] = useState<HostState | null>(null)
 
@@ -82,6 +86,7 @@ export default function Controller() {
 
     return (
         <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-amber-50 via-orange-50 to-red-50">
+            {<ConnectingModal open={!connected} />}
             <div className="w-full py-2 max-w-md rounded-3xl border border-amber-200/70 bg-white/80 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.08)] overflow-hidden">
                 <div className="p-4">
                     {/* Header */}
@@ -207,13 +212,17 @@ export default function Controller() {
                                             ? "bg-purple-500 hover:bg-purple-600 text-white"
                                             : "bg-transparent border-2 border-purple-500 text-purple-500 hover:bg-purple-600/10",
                                     ].join(" ")}
-                                    onClick={() => emit("game:revealTurn", { roomCode })}
+                                    onClick={() =>
+                                        throttledEmit("game:revealTurn", { roomCode }, 800)
+                                    }
                                 >
                                     {isRevealing ? "Revealing..." : "Start reveal"}
                                 </Button>
 
                                 <Button
-                                    onClick={() => emit("game:pauseResume", { roomCode })}
+                                    onClick={() =>
+                                        throttledEmit("game:pauseResume", { roomCode }, 500)
+                                    }
                                     className={[
                                         "h-12 text-sm rounded-xl active:scale-[0.98] transition flex items-center justify-center",
                                         isPaused
@@ -237,7 +246,9 @@ export default function Controller() {
                             }
                             <Button
                                 className="h-12 text-sm rounded-xl bg-red-600 hover:bg-red-700 text-white shadow-md active:scale-[0.99] transition"
-                                onClick={() => emit("game:nextTurn", { roomCode })}
+                                onClick={() =>
+                                    throttledEmit("game:nextTurn", { roomCode }, 2000)
+                                }
                             >
                                 Next turn
                             </Button>
