@@ -9,6 +9,7 @@ import { HostState } from "@/types"
 import { useSearchParams } from "next/navigation"
 import ConnectingModal from "@/components/ConnectingModal"
 import useThrottledEmit from "@/hooks/useThrottledEmit"
+import { Spinner } from "@/components/ui/spinner"
 
 
 export default function Controller() {
@@ -16,7 +17,7 @@ export default function Controller() {
     const searchParams = useSearchParams()
     const roomCode = searchParams.get("roomCode")
 
-    const { connected, emit, on, off, socket } = useSocket()
+    const { connected, emit, emitWithAck, on, off, socket } = useSocket()
     const lastJoinedSocketId = useRef<string | null>(null)
 
     const throttledEmit = useThrottledEmit(emit)
@@ -83,6 +84,23 @@ export default function Controller() {
         on("host:state", handleState)
         return () => off("host:state", handleState)
     }, [connected, on, off])
+
+    const [nextTurnPending, setNextTurnPending] = useState(false)
+
+    const handleNextTurn = async () => {
+        if (!roomCode || nextTurnPending) return
+        try {
+            setNextTurnPending(true)
+            const res = await emitWithAck<{ ok: boolean; error?: string }>(
+                "game:nextTurn",
+                { roomCode },
+                8000
+            )
+            if (!res?.ok) throw new Error(res?.error ?? "Next turn failed")
+        } finally {
+            setNextTurnPending(false)
+        }
+    }
 
     return (
         <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-amber-50 via-orange-50 to-red-50">
@@ -246,11 +264,15 @@ export default function Controller() {
                             }
                             <Button
                                 className="h-12 text-sm rounded-xl bg-red-600 hover:bg-red-700 text-white shadow-md active:scale-[0.99] transition"
-                                onClick={() =>
-                                    throttledEmit("game:nextTurn", { roomCode }, 2000)
-                                }
+                                disabled={!connected || nextTurnPending} onClick={handleNextTurn}
                             >
-                                Next turn
+                                {nextTurnPending ? (
+                                    <span className="inline-flex items-center gap-2">
+                                        <Spinner size="sm" className="border-red-400 border-t-white" />
+                                    </span>
+                                ) : (
+                                    "Next turn"
+                                )}
                             </Button>
                         </div>}
                 </div>

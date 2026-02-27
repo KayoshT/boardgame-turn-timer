@@ -84,9 +84,9 @@ io.on("connection", (socket) => {
         socket.to(roomCode).emit("host:requestState");
     });
 
-    socket.on("game:nextTurn", () => {
+    socket.on("game:nextTurn", (payload, ack) => {
         const roomCode = socket.data.roomCode;
-        if (!roomCode) return;
+        if (!roomCode) return ack?.({ ok: false });
 
         log.info(
             { roomCode, from: socket.id },
@@ -94,6 +94,8 @@ io.on("connection", (socket) => {
         );
 
         socket.to(roomCode).emit("game:nextTurn");
+
+        ack?.({ ok: true });
     });
 
     socket.on("game:pauseResume", () => {

@@ -11,7 +11,7 @@ export default function ConnectingModal({
 
     return (
         <Dialog open={open} >
-            <DialogContent showClose={false} className="flex items-center justify-center w-fit">
+            <DialogContent showClose={false} className="flex items-center justify-center w-fit" style={{ borderRadius: "100px" }}>
                 <Spinner size="md" />
                 Connecting...
             </DialogContent>
