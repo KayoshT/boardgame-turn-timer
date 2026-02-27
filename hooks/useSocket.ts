@@ -49,6 +49,22 @@ export function useSocket() {
         if (s?.connected) s.emit(event, payload)
     }, [])
 
+    const emitWithAck = useCallback(
+        <TResponse = any>(event: string, payload?: any, timeoutMs = 8000) => {
+            const s = socketRef.current
+            return new Promise<TResponse>((resolve, reject) => {
+                if (!s) return reject(new Error("Socket not initialised"))
+                if (!s.connected) return reject(new Error("Socket not connected"))
+
+                s.timeout(timeoutMs).emit(event, payload, (err: any, response: TResponse) => {
+                    if (err) reject(err)
+                    else resolve(response)
+                })
+            })
+        },
+        []
+    )
+
     const on = useCallback((event: string, handler: (...args: any[]) => void) => {
         socketRef.current?.on(event, handler)
     }, [])
@@ -57,6 +73,6 @@ export function useSocket() {
         socketRef.current?.off(event, handler)
     }, [])
 
-    return { socket, connected, emit, on, off }
+    return { socket, connected, emit, emitWithAck, on, off }
 }
 
