@@ -40,7 +40,7 @@ interface PlaythroughHistoryProps {
   currentSeasonId?: string
   gameType?: string
   onDeletePlaythrough: (playthroughId: string) => Promise<boolean>
-  onUpdatePlaythrough: (playthroughId: string, results: any[], date?: string) => Promise<void>
+  onUpdatePlaythrough: (playthroughId: string, results: any[], date?: string, roundCount?: number) => Promise<void>
   loading?: boolean
 }
 
@@ -78,9 +78,9 @@ export const PlaythroughHistory = ({
     setEditingPlaythrough(playthroughWithGameType)
   }
 
-  const handleUpdatePlaythrough = async (results: any[], date?: string) => {
+  const handleUpdatePlaythrough = async (results: any[], date?: string, roundCount?: number) => {
     if (!editingPlaythrough) return
-    await onUpdatePlaythrough(editingPlaythrough.id, results, date)
+    await onUpdatePlaythrough(editingPlaythrough.id, results, date, roundCount)
     setEditingPlaythrough(null)
   }
 

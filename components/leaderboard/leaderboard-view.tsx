@@ -18,9 +18,9 @@ interface LeaderboardViewProps {
   existingPlayers: any[]
   playthroughs: any[]
   currentSeasonSummary: SeasonSummary | null
-  onAddPlaythrough: (gameId: string, results: any[], date?: string) => void | Promise<void>
+  onAddPlaythrough: (gameId: string, results: any[], date?: string, roundCount?: number) => void | Promise<void>
   onDeletePlaythrough: (gameId: string, playthroughId: string) => Promise<boolean>
-  onUpdatePlaythrough: (gameId: string, playthroughId: string, results: any[], date?: string) => Promise<void>
+  onUpdatePlaythrough: (gameId: string, playthroughId: string, results: any[], date?: string, roundCount?: number) => Promise<void>
   onConcludeSeason: () => Promise<void>
   onFetchSeasons: (groupId: string) => Promise<any[]>
   onFetchSeasonBadges: (groupId: string, seasonId: string) => Promise<any[]>
@@ -68,16 +68,16 @@ export const LeaderboardView = ({
 
   const { game, rankings } = leaderboardData
 
-  const handlePlaythroughSubmit = async (results: any[], date?: string): Promise<void> => {
-    await onAddPlaythrough(game.id, results, date)
+  const handlePlaythroughSubmit = async (results: any[], date?: string, roundCount?: number): Promise<void> => {
+    await onAddPlaythrough(game.id, results, date, roundCount)
   }
 
   const handleDeletePlaythrough = async (playthroughId: string) => {
     return await onDeletePlaythrough(game.id, playthroughId)
   }
 
-  const handleUpdatePlaythrough = async (playthroughId: string, results: any[], date?: string) => {
-    await onUpdatePlaythrough(game.id, playthroughId, results, date)
+  const handleUpdatePlaythrough = async (playthroughId: string, results: any[], date?: string, roundCount?: number) => {
+    await onUpdatePlaythrough(game.id, playthroughId, results, date, roundCount)
   }
 
   const isDuneGame = game.game_type === "dune"
