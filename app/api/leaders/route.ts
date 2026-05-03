@@ -2,14 +2,14 @@ import { NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { neon } from "@neondatabase/serverless"
 
-// Enforce dynamic behavior to ensure fresh data on every request
+// Force dynamic behaviour so leaders are never served from cache.
 export const dynamic = "force-dynamic"
 
 export async function GET() {
   try {
-    // Establish a direct connection to bypass connection pooling for immediate consistency
     const directSql = process.env.DATABASE_URL
-        ? neon(process.env.DATABASE_URL, { pooling: false })
+        ? neon(process.env.DATABASE_URL)
+
         : sql
 
     const leaders = await directSql`
@@ -18,13 +18,12 @@ export async function GET() {
       ORDER BY faction, name
     `
 
-    // Verify total count for monitoring
     const countResult = await directSql`
       SELECT COUNT(*)::int as total FROM leaders
     `
     const totalCount = countResult[0]?.total || 0
 
-    // Validate presence of canonical factions
+    // Warn in development if any expected factions are missing.
     const currentFactions = [...new Set(leaders.map((l) => l.faction))]
     const expectedFactions = [
       "House Atreides",

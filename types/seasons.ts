@@ -29,6 +29,12 @@ export interface SeasonSummary {
   topPlayers: {
     playerId: string
     playerName: string
+    
+    player_id?: string
+    player_name?: string
+    games_played?: number
+    wins?: number
+    win_rate_percentage?: number
     totalGames: number
     firstPlaces: number
     winRate: number

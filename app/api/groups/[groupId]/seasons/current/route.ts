@@ -1,165 +1,203 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql, getUserId } from "@/lib/db"
 
+function firstRow<T>(rows: T[]): T | null {
+  return rows[0] ?? null
+}
+
+async function verifyGroupAccess(groupId: string, userId: string) {
+  return firstRow(
+    await sql`
+      SELECT id
+      FROM group_access
+      WHERE group_id = ${groupId}
+        AND user_id = ${userId}
+      LIMIT 1
+    `,
+  )
+}
+
+async function verifyGameBelongsToGroup(gameId: string, groupId: string) {
+  return firstRow(
+    await sql`
+      SELECT id, group_id
+      FROM games
+      WHERE id = ${gameId}
+        AND group_id = ${groupId}
+      LIMIT 1
+    `,
+  )
+}
+
+async function getOrCreateActiveSeason(groupId: string, gameId?: string | null) {
+  if (gameId) {
+    const existingGameSeason = firstRow(
+      await sql`
+        SELECT *
+        FROM seasons
+        WHERE group_id = ${groupId}
+          AND game_id = ${gameId}
+          AND status = 'active'
+        ORDER BY season_number DESC
+        LIMIT 1
+      `,
+    )
+
+    if (existingGameSeason) return existingGameSeason
+
+    const groupSeason = firstRow(
+      await sql`
+        SELECT *
+        FROM seasons
+        WHERE group_id = ${groupId}
+          AND game_id IS NULL
+          AND status = 'active'
+        ORDER BY season_number DESC
+        LIMIT 1
+      `,
+    )
+
+    const maxSeason = firstRow(
+      await sql`
+        SELECT COALESCE(MAX(season_number), 0) AS max_season_number
+        FROM seasons
+        WHERE group_id = ${groupId}
+          AND game_id = ${gameId}
+      `,
+    )
+
+    const seasonNumber = groupSeason?.season_number ?? Number(maxSeason?.max_season_number ?? 0) + 1
+    const minGamesThreshold = groupSeason?.min_games_threshold ?? 10
+    const startDate = groupSeason?.start_date ?? null
+
+    const created = firstRow(
+      await sql`
+        INSERT INTO seasons (
+          group_id,
+          game_id,
+          season_number,
+          start_date,
+          status,
+          min_games_threshold,
+          total_playthroughs
+        )
+        VALUES (
+          ${groupId},
+          ${gameId},
+          ${seasonNumber},
+          COALESCE(${startDate}, NOW()),
+          'active',
+          ${minGamesThreshold},
+          0
+        )
+        ON CONFLICT (game_id, season_number)
+        DO UPDATE SET
+          status = 'active',
+          end_date = NULL
+        RETURNING *
+      `,
+    )
+
+    if (!created) throw new Error("Failed to create active season")
+    return created
+  }
+
+  const groupSeason = firstRow(
+    await sql`
+      SELECT *
+      FROM seasons
+      WHERE group_id = ${groupId}
+        AND game_id IS NULL
+        AND status = 'active'
+      ORDER BY season_number DESC
+      LIMIT 1
+    `,
+  )
+
+  if (groupSeason) return groupSeason
+
+  const maxSeason = firstRow(
+    await sql`
+      SELECT COALESCE(MAX(season_number), 0) AS max_season_number
+      FROM seasons
+      WHERE group_id = ${groupId}
+        AND game_id IS NULL
+    `,
+  )
+
+  const created = firstRow(
+    await sql`
+      INSERT INTO seasons (group_id, season_number, status, min_games_threshold, total_playthroughs)
+      VALUES (${groupId}, ${Number(maxSeason?.max_season_number ?? 0) + 1}, 'active', 10, 0)
+      RETURNING *
+    `,
+  )
+
+  if (!created) throw new Error("Failed to create active season")
+  return created
+}
+
 export async function GET(request: NextRequest, { params }: { params: { groupId: string } }) {
   try {
     const userId = getUserId(request)
     const { groupId } = params
-    const { searchParams } = new URL(request.url)
-    const gameId = searchParams.get("gameId")
+    const gameId = request.nextUrl.searchParams.get("gameId")
 
-    console.log("Current season API called with:", { groupId, gameId, userId })
-
-    // Verify user has access to this group
-    const [access] = await sql`
-      SELECT group_id FROM group_access
-      WHERE group_id = ${groupId} AND user_id = ${userId}
-      LIMIT 1
-    `
-
+    const access = await verifyGroupAccess(groupId, userId)
     if (!access) {
-      console.log("Access denied for user:", userId, "group:", groupId)
-      return NextResponse.json({ success: false, error: "Group not found or access denied" }, { status: 404 })
+      return NextResponse.json({ success: false, error: "Access denied" }, { status: 403 })
     }
 
-    if (!gameId) {
-      console.log("No gameId provided")
-      return NextResponse.json({ success: false, error: "Game ID is required" }, { status: 400 })
-    }
-
-    // Get current season for the specific game
-    console.log("Querying for season with groupId:", groupId, "gameId:", gameId)
-
-    const seasonQuery = await sql`
-      SELECT 
-        s.id,
-        s.group_id,
-        s.game_id,
-        s.season_number,
-        s.start_date,
-        s.end_date,
-        s.status,
-        s.min_games_threshold,
-        s.total_playthroughs,
-        s.created_at,
-        COUNT(p.id) as actual_playthrough_count
-      FROM seasons s
-      LEFT JOIN playthroughs p ON s.id = p.season_id
-      WHERE s.group_id = ${groupId} 
-        AND s.game_id = ${gameId}
-        AND s.status = 'active'
-      GROUP BY s.id, s.group_id, s.game_id, s.season_number, s.start_date, s.end_date, s.status, s.min_games_threshold, s.total_playthroughs, s.created_at
-      ORDER BY s.season_number DESC
-      LIMIT 1
-    `
-
-    console.log("Season query result:", seasonQuery)
-
-    if (!seasonQuery || seasonQuery.length === 0) {
-      // Try to create a season if none exists
-      console.log("No active season found, creating one for game:", gameId)
-
-      try {
-        await sql`
-          INSERT INTO seasons (group_id, game_id, season_number, start_date, status, min_games_threshold)
-          VALUES (${groupId}, ${gameId}, 1, NOW(), 'active', 10)
-          ON CONFLICT (game_id, season_number) DO NOTHING
-        `
-
-        // Try the query again
-        const retryQuery = await sql`
-          SELECT 
-            s.id,
-            s.group_id,
-            s.game_id,
-            s.season_number,
-            s.start_date,
-            s.end_date,
-            s.status,
-            s.min_games_threshold,
-            s.total_playthroughs,
-            s.created_at,
-            COUNT(p.id) as actual_playthrough_count
-          FROM seasons s
-          LEFT JOIN playthroughs p ON s.id = p.season_id
-          WHERE s.group_id = ${groupId} 
-            AND s.game_id = ${gameId}
-            AND s.status = 'active'
-          GROUP BY s.id, s.group_id, s.game_id, s.season_number, s.start_date, s.end_date, s.status, s.min_games_threshold, s.total_playthroughs, s.created_at
-          LIMIT 1
-        `
-
-        if (retryQuery && retryQuery.length > 0) {
-          const currentSeason = retryQuery[0]
-          const seasonSummary = {
-            season: {
-              ...currentSeason,
-              total_playthroughs: Number.parseInt(currentSeason.actual_playthrough_count || "0"),
-            },
-            topPlayers: [],
-          }
-          console.log("Created and returning new season:", seasonSummary)
-          return NextResponse.json({ success: true, data: seasonSummary })
-        }
-      } catch (createError) {
-        console.error("Failed to create season:", createError)
+    if (gameId) {
+      const game = await verifyGameBelongsToGroup(gameId, groupId)
+      if (!game) {
+        return NextResponse.json({ success: false, error: "Game not found for this group" }, { status: 404 })
       }
-
-      console.log("Still no active season found for game:", gameId, "in group:", groupId)
-      return NextResponse.json({ success: false, error: "No active season found for this game" }, { status: 404 })
     }
 
-    const currentSeason = seasonQuery[0]
-    console.log("Current season ID being returned:", currentSeason.id)
+    const season = await getOrCreateActiveSeason(groupId, gameId)
 
-    // Get top players for this season with FIXED win rate calculation
-    const topPlayers = await sql`
-      SELECT 
-        pr.player_id,
-        pr.player_name,
-        COUNT(pr.id)::int as games_played,
-        SUM(CASE WHEN pr.rank = 1 THEN 1 ELSE 0 END)::int as wins,
-        ROUND(AVG(pr.rank::numeric), 2) as avg_rank,
-        COALESCE(ROUND(AVG(pr.final_vp::numeric), 1), 0) as avg_vp,
-        CASE 
-          WHEN COUNT(pr.id) > 0 THEN ROUND((SUM(CASE WHEN pr.rank = 1 THEN 1 ELSE 0 END)::numeric / COUNT(pr.id)::numeric) * 100, 1)
-          ELSE 0 
-        END as win_rate_percentage
-      FROM playthrough_results pr
-      JOIN playthroughs p ON pr.playthrough_id = p.id
-      WHERE p.season_id = ${currentSeason.id}
-      GROUP BY pr.player_id, pr.player_name
-      HAVING COUNT(pr.id) > 0
-      ORDER BY wins DESC, avg_rank ASC
-      LIMIT 10
+    const [playthroughCount] = await sql`
+      SELECT COUNT(*)::int AS total
+      FROM playthroughs
+      WHERE season_id = ${season.id}
     `
 
-    console.log("Top players query result:", topPlayers)
+    const playerStats = await sql`
+      SELECT
+        pr.player_id AS "playerId",
+        pr.player_name AS "playerName",
+        COUNT(*)::int AS "totalGames",
+        COUNT(CASE WHEN pr.rank = 1 THEN 1 END)::int AS "firstPlaces",
+        ROUND((COUNT(CASE WHEN pr.rank = 1 THEN 1 END)::decimal / NULLIF(COUNT(*), 0)) * 100, 2)::float AS "winRate",
+        ROUND(AVG(pr.rank::decimal), 2)::float AS "averageRank"
+      FROM playthrough_results pr
+      INNER JOIN playthroughs p ON pr.playthrough_id = p.id
+      WHERE p.season_id = ${season.id}
+      GROUP BY pr.player_id, pr.player_name
+      ORDER BY "firstPlaces" DESC, "winRate" DESC, "averageRank" ASC, "playerName" ASC
+    `
 
-    // Transform the data to match expected format
-    const transformedTopPlayers = (topPlayers || []).map((player: any) => ({
-      player_id: player.player_id,
-      player_name: player.player_name,
-      games_played: Number.parseInt(player.games_played),
-      wins: Number.parseInt(player.wins),
-      avg_rank: Number.parseFloat(player.avg_rank),
-      avg_vp: Number.parseFloat(player.avg_vp),
-      win_rate_percentage: Number.parseFloat(player.win_rate_percentage),
-    }))
+    const totalPlaythroughs = Number(playthroughCount?.total ?? 0)
 
-    const seasonSummary = {
-      season: {
-        ...currentSeason,
-        total_playthroughs: Number.parseInt(currentSeason.actual_playthrough_count || "0"),
+    return NextResponse.json({
+      success: true,
+      data: {
+        season,
+        totalPlaythroughs,
+        playerStats,
+        canConclude: totalPlaythroughs >= Number(season.min_games_threshold ?? 10),
       },
-      topPlayers: transformedTopPlayers,
-      canConclude: Number.parseInt(currentSeason.actual_playthrough_count || "0") >= currentSeason.min_games_threshold,
-    }
-
-    console.log("Season summary being returned:", JSON.stringify(seasonSummary, null, 2))
-    return NextResponse.json({ success: true, data: seasonSummary })
+    })
   } catch (error) {
     console.error("Error fetching current season:", error)
-    return NextResponse.json({ success: false, error: "Failed to fetch current season" }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to fetch current season",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }
