@@ -2,9 +2,9 @@ import { Card, CardContent } from "@/components/ui/card"
 
 export const GameInfo = () => {
   return (
-    <Card className="mt-8 border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
+    <Card className="mt-8 border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 text-amber-950 dark:border-white/[0.08] dark:[background-image:none] dark:bg-zinc-900/70 dark:text-zinc-300 dark:shadow-none">
       <CardContent className="p-4">
-        <div className="text-center text-sm text-amber-700">
+        <div className="text-center text-sm text-amber-700 dark:text-zinc-400 [&_strong]:dark:text-zinc-100">
           <p className="mb-2">
             <strong>Reveal Turn:</strong> Click "Start Reveal" to mark current turn as reveal phase. After "Next Turn",
             player exits round.

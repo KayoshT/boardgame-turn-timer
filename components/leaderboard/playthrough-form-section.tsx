@@ -116,22 +116,22 @@ export function PlaythroughFormSection() {
   }
 
   return (
-    <Card className="mb-6 border-amber-200 bg-amber-50/50">
+    <Card className="mb-6 border-amber-200 bg-amber-50/50 text-amber-950 dark:border-white/[0.08] dark:[background-image:none] dark:bg-zinc-900/70 dark:text-zinc-200 dark:shadow-none">
       <Collapsible open={showPlaythroughForm} onOpenChange={setShowPlaythroughForm}>
         <CollapsibleTrigger asChild>
-          <CardHeader className="cursor-pointer hover:bg-amber-100/50 transition-colors">
+          <CardHeader className="cursor-pointer hover:bg-amber-100/50 transition-colors dark:hover:bg-white/[0.04]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-amber-700" />
-                <CardTitle className="text-lg">Log Playthrough</CardTitle>
+                <Trophy className="w-5 h-5 text-amber-700 dark:text-amber-500/35" />
+                <CardTitle className="text-lg dark:text-zinc-200">Log Playthrough</CardTitle>
               </div>
               {showPlaythroughForm ? (
-                <ChevronUp className="w-5 h-5 text-amber-700" />
+                <ChevronUp className="w-5 h-5 text-amber-700 dark:text-zinc-500" />
               ) : (
-                <ChevronDown className="w-5 h-5 text-amber-700" />
+                <ChevronDown className="w-5 h-5 text-amber-700 dark:text-zinc-500" />
               )}
             </div>
-            <CardDescription>
+            <CardDescription className="dark:text-zinc-500">
               Record your game results directly from the timer (no need to go to leaderboard page)
             </CardDescription>
           </CardHeader>
@@ -140,7 +140,7 @@ export function PlaythroughFormSection() {
           <CardContent className="space-y-4">
             {groups.length > 1 && (
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Select Group</label>
+                <label className="text-sm font-medium text-slate-700 dark:text-zinc-500">Select Group</label>
                 <Select value={formSelectedGroupId || ""} onValueChange={setFormSelectedGroupId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a group" />
@@ -159,18 +159,18 @@ export function PlaythroughFormSection() {
             {formSelectedGroupId && (
               <>
                 {leaderboardLoading ? (
-                  <div className="text-center py-8 text-slate-500">
+                  <div className="text-center py-8 text-slate-500 dark:text-slate-400">
                     <p>Loading games...</p>
                   </div>
                 ) : selectedGameId && selectedGame ? (
                   isDuneGame ? (
                     <div>
-                      <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                        <div className="flex items-center text-amber-800">
-                          <Crown className="w-5 h-5 mr-2" />
+                      <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg dark:bg-zinc-900/40 dark:border-white/[0.06]">
+                        <div className="flex items-center text-amber-800 dark:text-zinc-300">
+                          <Crown className="w-5 h-5 mr-2 dark:text-amber-500/30" />
                           <span className="font-semibold">Enhanced Dune: Imperium Tracking</span>
                         </div>
-                        <p className="text-sm text-amber-700 mt-1">
+                        <p className="text-sm text-amber-700 dark:text-zinc-500 mt-1">
                           Record detailed statistics including leader selection, victory points, resources, and strategic
                           archetypes.
                         </p>
@@ -191,7 +191,7 @@ export function PlaythroughFormSection() {
                     />
                   )
                 ) : (
-                  <div className="text-center py-8 text-slate-500 space-y-2">
+                  <div className="text-center py-8 text-slate-500 dark:text-slate-400 space-y-2">
                     <p>No Dune: Imperium game found in this group.</p>
                     <Button asChild variant="outline" size="sm">
                       <Link href="/leaderboard">

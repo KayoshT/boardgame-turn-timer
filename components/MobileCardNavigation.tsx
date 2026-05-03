@@ -47,12 +47,12 @@ export const MobileCardNavigation = ({
 
   const getButtonStyle = () => {
     if (isPaused) {
-      return "bg-blue-100 border-blue-500 text-blue-700 font-medium"
+      return "bg-blue-100 border-blue-500 text-blue-700 font-medium dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-400 dark:font-normal"
     }
     if (isActivePlayer && gameStarted && isRunning) {
-      return "bg-amber-100 border-amber-500 text-amber-700 font-medium"
+      return "bg-amber-100 border-amber-500 text-amber-700 font-medium dark:border-amber-500/20 dark:bg-amber-500/[0.08] dark:text-amber-100/90 dark:font-normal dark:shadow-[0_0_24px_-8px_rgba(245,158,11,0.2)]"
     }
-    return "border-amber-400 text-amber-700 hover:bg-amber-50"
+    return "border-amber-400 text-amber-700 hover:bg-amber-50 dark:border-white/10 dark:text-zinc-500 dark:hover:bg-white/[0.05] dark:hover:text-zinc-300"
   }
 
   return (
@@ -74,7 +74,7 @@ export const MobileCardNavigation = ({
             <div
               key={index}
               className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                index === currentIndex ? "bg-amber-600 scale-125" : "bg-amber-300"
+                index === currentIndex ? "bg-amber-600 scale-125 dark:bg-amber-400/50" : "bg-amber-300 dark:bg-zinc-700"
               }`}
             />
           ))}
@@ -84,14 +84,14 @@ export const MobileCardNavigation = ({
         {gameStarted && (
           <Badge
             variant="outline"
-            className={`text-xs ${
+            className={`text-xs font-normal ${
               isPaused
-                ? "border-blue-500 text-blue-700 bg-blue-50"
+                ? "border-zinc-300 text-zinc-600 bg-zinc-50 dark:border-white/10 dark:text-zinc-400 dark:bg-zinc-900/50"
                 : isActivePlayer && isRunning
-                  ? "border-green-500 text-green-700 bg-green-50"
+                  ? "border-emerald-300 text-emerald-800 bg-emerald-50 dark:border-emerald-500/15 dark:text-emerald-200/75 dark:bg-emerald-950/25"
                   : isActivePlayer
-                    ? "border-amber-500 text-amber-700 bg-amber-50"
-                    : "border-gray-400 text-gray-600 bg-gray-50"
+                    ? "border-amber-300 text-amber-800 bg-amber-50 dark:border-amber-500/15 dark:text-amber-100/80 dark:bg-amber-950/20"
+                    : "border-zinc-200 text-zinc-600 bg-zinc-50 dark:border-white/10 dark:text-zinc-500 dark:bg-zinc-900/40"
             }`}
           >
             {isPaused ? (

@@ -14,10 +14,10 @@ export const getPlayerColors = (color: string): ColorOption => {
 
 export const getTurnProgressColor = (secondsUsed: number): string => {
   if (secondsUsed < 30) {
-    return "bg-green-500"
+    return "bg-emerald-500 dark:bg-emerald-500"
   } else if (secondsUsed < 50) {
-    return "bg-yellow-500"
+    return "bg-amber-500 dark:bg-amber-500"
   } else {
-    return "bg-red-500"
+    return "bg-rose-500 dark:bg-rose-500"
   }
 }

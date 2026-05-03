@@ -35,16 +35,16 @@ export const SettingsPanel = ({
   if (!showSettings && gameStarted) return null
 
   return (
-    <Card className="mb-8 border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+    <Card className="mb-8 border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-950 dark:border-white/[0.08] dark:[background-image:none] dark:bg-zinc-900/75 dark:text-zinc-200 dark:shadow-none">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-blue-800">
-          <Settings className="w-5 h-5" />
+        <CardTitle className="flex items-center gap-2 text-blue-800 dark:text-zinc-100">
+          <Settings className="w-5 h-5 dark:text-zinc-500" />
           Game Settings
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center gap-4">
-          <Label htmlFor="initial-time" className="text-blue-700 font-medium">
+        <div className="flex items-center gap-4 flex-wrap">
+          <Label htmlFor="initial-time" className="text-blue-700 dark:text-zinc-400 font-medium">
             Initial Time (minutes):
           </Label>
           <Input
@@ -54,12 +54,17 @@ export const SettingsPanel = ({
             max="60"
             value={initialTime / 60}
             onChange={(e) => onInitialTimeChange(Number.parseInt(e.target.value) * 60 || 600)}
-            className="w-20"
+            className="w-20 dark:border-white/10 dark:bg-zinc-950/50 dark:text-zinc-200"
           />
-          <span className="text-sm text-blue-600">({formatTime(initialTime)} per player)</span>
+          <span className="text-sm text-blue-600 dark:text-zinc-500">({formatTime(initialTime)} per player)</span>
         </div>
         <div className="flex items-center gap-4 flex-wrap">
-          <Button onClick={onToggleAdjustButtons} variant="outline" size="sm" className="border-blue-400 text-blue-600">
+          <Button
+            onClick={onToggleAdjustButtons}
+            variant="outline"
+            size="sm"
+            className="border-blue-400 text-blue-600 dark:border-white/10 dark:bg-transparent dark:text-zinc-300 dark:hover:bg-white/[0.06] dark:hover:text-white"
+          >
             {showAdjustButtons ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
             {showAdjustButtons ? "Hide" : "Show"} Time Adjust Buttons
           </Button>
@@ -68,13 +73,18 @@ export const SettingsPanel = ({
               onClick={onToggleColorSelectors}
               variant="outline"
               size="sm"
-              className="border-blue-400 text-blue-600"
+              className="border-blue-400 text-blue-600 dark:border-white/10 dark:bg-transparent dark:text-zinc-300 dark:hover:bg-white/[0.06] dark:hover:text-white"
             >
               {showColorSelectors ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
               {showColorSelectors ? "Hide" : "Show"} Color Selectors
             </Button>
           )}
-          <Button onClick={onToggleSound} variant="outline" size="sm" className="border-blue-400 text-blue-600">
+          <Button
+            onClick={onToggleSound}
+            variant="outline"
+            size="sm"
+            className="border-blue-400 text-blue-600 dark:border-white/10 dark:bg-transparent dark:text-zinc-300 dark:hover:bg-white/[0.06] dark:hover:text-white"
+          >
             {soundEnabled ? <VolumeX className="w-4 h-4 mr-2" /> : <Volume2 className="w-4 h-4 mr-2" />}
             {soundEnabled ? "Disable" : "Enable"} Sound Effects
           </Button>
