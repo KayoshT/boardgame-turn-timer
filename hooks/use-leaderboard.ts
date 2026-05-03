@@ -301,11 +301,7 @@ export const useLeaderboard = () => {
 
     track("playthrough_updated", { player_count: results.length, has_game: !!gameId })
 
-    await Promise.all([
-      loadPlaythroughsForGame(gameId),
-      selectedGroupId ? loadPlayersForGroup(selectedGroupId) : Promise.resolve(),
-      selectedGroupId && selectedGameId ? loadCurrentSeasonForGame(selectedGroupId, selectedGameId) : Promise.resolve(),
-    ])
+    await loadPlaythroughsForGame(gameId)
   }
 
   const deletePlaythrough = async (gameId: string, playthroughId: string): Promise<boolean> => {
