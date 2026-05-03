@@ -18,7 +18,7 @@ interface LeaderboardViewProps {
   existingPlayers: any[]
   playthroughs: any[]
   currentSeasonSummary: SeasonSummary | null
-  onAddPlaythrough: (gameId: string, results: any[], date?: string) => void
+  onAddPlaythrough: (gameId: string, results: any[], date?: string) => void | Promise<void>
   onDeletePlaythrough: (gameId: string, playthroughId: string) => Promise<boolean>
   onUpdatePlaythrough: (gameId: string, playthroughId: string, results: any[], date?: string) => Promise<void>
   onConcludeSeason: () => Promise<void>
@@ -68,8 +68,8 @@ export const LeaderboardView = ({
 
   const { game, rankings } = leaderboardData
 
-  const handlePlaythroughSubmit = (results: any[], date?: string) => {
-    onAddPlaythrough(game.id, results, date)
+  const handlePlaythroughSubmit = async (results: any[], date?: string): Promise<void> => {
+    await onAddPlaythrough(game.id, results, date)
   }
 
   const handleDeletePlaythrough = async (playthroughId: string) => {
@@ -80,7 +80,6 @@ export const LeaderboardView = ({
     await onUpdatePlaythrough(game.id, playthroughId, results, date)
   }
 
-  // Check if this is a Dune game
   const isDuneGame = game.game_type === "dune"
 
   return (

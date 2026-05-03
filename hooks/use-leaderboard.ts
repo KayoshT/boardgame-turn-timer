@@ -78,7 +78,7 @@ export const useLeaderboard = () => {
         setGroups(response.data)
       } else {
         console.error("Failed to load groups:", response.error)
-        track("error_occurred", { error_type: "load_groups_failed", error_message: response.error })
+        track("error_occurred", { error_type: "load_groups_failed", error_message: response.error ?? "Unknown error" })
       }
     } catch (error) {
       console.error("Failed to load groups:", error)
@@ -101,7 +101,7 @@ export const useLeaderboard = () => {
         setGames(response.data)
       } else {
         console.error("Failed to load games:", response.error)
-        track("error_occurred", { error_type: "load_games_failed", error_message: response.error })
+        track("error_occurred", { error_type: "load_games_failed", error_message: response.error ?? "Unknown error" })
       }
     } catch (error) {
       console.error("Failed to load games:", error)
@@ -123,7 +123,7 @@ export const useLeaderboard = () => {
         setPlayers(response.data)
       } else {
         console.error("Failed to load players:", response.error)
-        track("error_occurred", { error_type: "load_players_failed", error_message: response.error })
+        track("error_occurred", { error_type: "load_players_failed", error_message: response.error ?? "Unknown error" })
       }
     } catch (error) {
       console.error("Failed to load players:", error)
@@ -145,7 +145,7 @@ export const useLeaderboard = () => {
         setPlaythroughs(response.data)
       } else {
         console.error("Failed to load playthroughs:", response.error)
-        track("error_occurred", { error_type: "load_playthroughs_failed", error_message: response.error })
+        track("error_occurred", { error_type: "load_playthroughs_failed", error_message: response.error ?? "Unknown error" })
       }
     } catch (error) {
       console.error("Failed to load playthroughs:", error)
@@ -199,15 +199,13 @@ export const useLeaderboard = () => {
     const response = await groupApi.createGroup(name, description)
     console.timeEnd("Create Group")
     if (!response.success || !response.data) {
-      track("error_occurred", { error_type: "create_group_failed", error_message: response.error })
+      track("error_occurred", { error_type: "create_group_failed", error_message: response.error ?? "Unknown error" })
       throw new Error(response.error || "Failed to create group")
     }
 
-    // Store the group code when creating a group
     groupStorage.storeGroupCode(response.data.id, response.data.code, response.data.name)
     console.log("Stored group code for created group:", response.data.id)
 
-    // Track group creation
     track("group_created", { group_name_length: response.data.name.length })
 
     await loadGroups()
@@ -219,15 +217,13 @@ export const useLeaderboard = () => {
     const response = await groupApi.joinGroup(code)
     console.timeEnd("Join Group")
     if (!response.success || !response.data) {
-      track("error_occurred", { error_type: "join_group_failed", error_message: response.error })
+      track("error_occurred", { error_type: "join_group_failed", error_message: response.error ?? "Unknown error" })
       throw new Error(response.error || "Failed to join group")
     }
 
-    // Store the group code when joining a group
     groupStorage.storeGroupCode(response.data.id, response.data.code, response.data.name)
     console.log("Stored group code for joined group:", response.data.id)
 
-    // Track group join
     track("group_joined", { has_description: !!response.data.description })
 
     await loadGroups()
@@ -239,11 +235,10 @@ export const useLeaderboard = () => {
     const response = await gameApi.createGame(groupId, name, gameType)
     console.timeEnd("Create Game")
     if (!response.success || !response.data) {
-      track("error_occurred", { error_type: "create_game_failed", error_message: response.error })
+      track("error_occurred", { error_type: "create_game_failed", error_message: response.error ?? "Unknown error" })
       throw new Error(response.error || "Failed to create game")
     }
 
-    // Track game creation
     track("game_created", { game_name_length: response.data.name.length, game_type: gameType })
 
     await loadGamesForGroup(groupId)
@@ -262,23 +257,22 @@ export const useLeaderboard = () => {
     console.timeEnd("Add Playthrough")
 
     if (!response.success || !response.data) {
-      track("error_occurred", { error_type: "add_playthrough_failed", error_message: response.error })
+      track("error_occurred", { error_type: "add_playthrough_failed", error_message: response.error ?? "Unknown error" })
       throw new Error(response.error || "Failed to create playthrough")
     }
 
     console.log("Playthrough created successfully:", response.data)
 
-    // Track playthrough addition
     track("playthrough_added", { player_count: results.length, has_game: !!gameId })
 
-    // Force refresh all data to ensure UI updates properly
+    // Force a full refresh so the UI reflects the new playthrough.
     await Promise.all([
       loadPlaythroughsForGame(gameId),
       selectedGroupId ? loadPlayersForGroup(selectedGroupId) : Promise.resolve(),
       selectedGroupId && selectedGameId ? loadCurrentSeasonForGame(selectedGroupId, selectedGameId) : Promise.resolve(),
     ])
 
-    // Small delay to ensure state updates propagate
+    // Let state updates settle before refreshing.
     await new Promise((resolve) => setTimeout(resolve, 100))
 
     return response.data
@@ -297,16 +291,14 @@ export const useLeaderboard = () => {
     console.timeEnd("Update Playthrough")
 
     if (!response.success) {
-      track("error_occurred", { error_type: "update_playthrough_failed", error_message: response.error })
+      track("error_occurred", { error_type: "update_playthrough_failed", error_message: response.error ?? "Unknown error" })
       throw new Error(response.error || "Failed to update playthrough")
     }
 
     console.log("Playthrough updated successfully:", response.data)
 
-    // Track playthrough update
     track("playthrough_updated", { player_count: results.length, has_game: !!gameId })
 
-    // Refresh playthroughs, players, and season data
     await Promise.all([
       loadPlaythroughsForGame(gameId),
       selectedGroupId ? loadPlayersForGroup(selectedGroupId) : Promise.resolve(),
@@ -321,14 +313,12 @@ export const useLeaderboard = () => {
       console.timeEnd("Delete Playthrough")
 
       if (!response.success) {
-        track("error_occurred", { error_type: "delete_playthrough_failed", error_message: response.error })
+        track("error_occurred", { error_type: "delete_playthrough_failed", error_message: response.error ?? "Unknown error" })
         throw new Error(response.error || "Failed to delete playthrough")
       }
 
-      // Track playthrough deletion
       track("playthrough_deleted")
 
-      // Update local state and refresh season data
       setPlaythroughs((prev) => prev.filter((p) => p.id !== playthroughId))
       if (selectedGroupId && selectedGameId) {
         loadCurrentSeasonForGame(selectedGroupId, selectedGameId)
@@ -352,14 +342,12 @@ export const useLeaderboard = () => {
     console.timeEnd("Conclude Season")
 
     if (!response.success) {
-      track("error_occurred", { error_type: "conclude_season_failed", error_message: response.error })
+      track("error_occurred", { error_type: "conclude_season_failed", error_message: response.error ?? "Unknown error" })
       throw new Error(response.error || "Failed to conclude season")
     }
 
-    // Track season conclusion
     track("season_concluded", { season_number: response.data?.seasonNumber })
 
-    // Refresh season data and playthroughs to get the new season
     await Promise.all([
       loadCurrentSeasonForGame(selectedGroupId, selectedGameId),
       loadPlaythroughsForGame(selectedGameId),
@@ -383,16 +371,13 @@ export const useLeaderboard = () => {
   }
 
   const leaveGroup = (groupId: string) => {
-    // Remove group code from localStorage
     groupStorage.removeGroupCode(groupId)
     console.log("Removed group code for group:", groupId)
 
-    // If this was the selected group, deselect it
     if (selectedGroupId === groupId) {
       setSelectedGroupId(null)
     }
 
-    // Refresh groups list
     loadGroups()
   }
 

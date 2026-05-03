@@ -134,7 +134,7 @@ export const GameSelector = ({ games, selectedGameId, onSelectGame, onAddGame, o
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => copyGameCode(selectedGame.code, selectedGame.id)}
+                          onClick={() => selectedGame.code && copyGameCode(selectedGame.code, selectedGame.id)}
                         >
                           {copiedGameId === selectedGame.id ? (
                             <Check className="h-4 w-4" />
