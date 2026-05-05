@@ -657,6 +657,32 @@ async function fetchCompletePlaythrough(playthroughId: string) {
 export async function GET(request: NextRequest, { params }: { params: { gameId: string } }) {
   try {
     const { gameId } = params
+    const includeDetails = ["1", "true", "full", "details"].includes(
+      request.nextUrl.searchParams.get("includeDetails")?.toLowerCase() ?? "",
+    )
+
+    if (includeDetails) {
+      const playthroughRows = await sql`
+        SELECT id
+        FROM playthroughs
+        WHERE game_id = ${gameId}
+        ORDER BY timestamp DESC
+      `
+
+      const completePlaythroughs = []
+      for (const playthrough of playthroughRows) {
+        const completePlaythrough = await fetchCompletePlaythrough(playthrough.id)
+        if (completePlaythrough) {
+          completePlaythroughs.push({
+            ...completePlaythrough,
+            isSummary: false,
+            hasFullDetails: true,
+          })
+        }
+      }
+
+      return NextResponse.json({ success: true, data: completePlaythroughs })
+    }
 
     const playthroughs = await sql`
       SELECT 
@@ -667,128 +693,38 @@ export async function GET(request: NextRequest, { params }: { params: { gameId: 
         p.timestamp,
         p.recorded_by,
         p.round_count,
+        p.round_count AS "roundCount",
         p.notes,
+        true AS "isSummary",
+        false AS "hasFullDetails",
         COALESCE(
           json_agg(
-            (
-              jsonb_build_object(
-                'resultId', pr.id,
-                'id', pr.id,
-                'playerId', pr.player_id,
-                'playerName', pr.player_name,
-                'rank', pr.rank,
-                'leader', pr.leader_name,
-                'leader_name', pr.leader_name,
-                'leaderName', pr.leader_name,
-                'leaderId', pr.leader_id,
-                'score', pr.score,
-                'victory_points', pr.score,
-                'finalVp', pr.score,
-                'spice', pr.endgame_spice_count,
-                'endgameSpiceCount', pr.endgame_spice_count,
-                'solari', pr.endgame_solari_count,
-                'endgameSolariCount', pr.endgame_solari_count,
-                'water', pr.endgame_water_count,
-                'endgameWaterCount', pr.endgame_water_count,
-                'cardsTrashedCount', pr.cards_trashed_count,
-                'cardsTrashed', pr.cards_trashed_count,
-                'finalDeckSize', pr.final_deck_size,
-                'cards_in_deck', pr.final_deck_size,
-                'turnOrderPosition', pr.turn_order_position,
-                'strategicArchetypeName', pr.strategic_archetype_name,
-                'strategic_archetype', pr.strategic_archetype_name,
-                'strategicArchetypeId', pr.strategic_archetype_id,
-                'final_conflict_strength', pr.final_conflict_strength,
-                'final_conflict_place', pr.final_conflict_place,
-                'finalConflictStrength', pr.final_conflict_strength,
-                'finalConflictPlace', pr.final_conflict_place,
-                'finalConflictGarrisonTroops', pr.final_conflict_garrison_troops,
-                'final_conflict_garrison_troops', pr.final_conflict_garrison_troops,
-                'finalConflictGarrisonCommanders', pr.final_conflict_garrison_commanders,
-                'final_conflict_garrison_commanders', pr.final_conflict_garrison_commanders,
-                'finalConflictDeployedTroops', pr.final_conflict_deployed_troops,
-                'final_conflict_deployed_troops', pr.final_conflict_deployed_troops,
-                'finalConflictDeployedCommanders', pr.final_conflict_deployed_commanders,
-                'final_conflict_deployed_commanders', pr.final_conflict_deployed_commanders,
-                'finalConflictDeployedSandworms', pr.final_conflict_deployed_sandworms,
-                'final_conflict_deployed_sandworms', pr.final_conflict_deployed_sandworms
-              ) ||
-              jsonb_build_object(
-                'finalConflictStrengthSourcesCommanderSkills', pr.final_conflict_strength_sources_commander_skills,
-                'final_conflict_strength_sources_commander_skills', pr.final_conflict_strength_sources_commander_skills,
-                'finalConflictStrengthSourcesIntrigue', pr.final_conflict_strength_sources_intrigue,
-                'final_conflict_strength_sources_intrigue', pr.final_conflict_strength_sources_intrigue,
-                'finalConflictStrengthSourcesImperium', pr.final_conflict_strength_sources_imperium,
-                'final_conflict_strength_sources_imperium', pr.final_conflict_strength_sources_imperium,
-                'finalConflictStrengthSourcesTech', pr.final_conflict_strength_sources_tech,
-                'final_conflict_strength_sources_tech', pr.final_conflict_strength_sources_tech,
-                'finalConflictStrengthSourcesUnaccounted', pr.final_conflict_strength_sources_unaccounted,
-                'final_conflict_strength_sources_unaccounted', pr.final_conflict_strength_sources_unaccounted,
-                'hasAllianceEmperor', pr.has_alliance_emperor,
-                'has_alliance_emperor', pr.has_alliance_emperor,
-                'hasAllianceSpacingGuild', pr.has_alliance_spacing_guild,
-                'has_alliance_spacing_guild', pr.has_alliance_spacing_guild,
-                'hasAllianceBeneGesserit', pr.has_alliance_bene_gesserit,
-                'has_alliance_bene_gesserit', pr.has_alliance_bene_gesserit,
-                'hasAllianceFremen', pr.has_alliance_fremen,
-                'has_alliance_fremen', pr.has_alliance_fremen,
-                'vpSourcesBase', pr.vp_sources_base,
-                'vp_sources_base', pr.vp_sources_base,
-                'vpSourcesFactions', pr.vp_sources_factions,
-                'vp_sources_factions', pr.vp_sources_factions,
-                'vpSourcesConflictCards', pr.vp_sources_conflict_cards,
-                'vp_sources_conflict_cards', pr.vp_sources_conflict_cards,
-                'vpSourcesFinalConflict', pr.vp_sources_final_conflict,
-                'vp_sources_final_conflict', pr.vp_sources_final_conflict,
-                'vpSourcesBattleIconMatches', pr.vp_sources_battle_icon_matches,
-                'vp_sources_battle_icon_matches', pr.vp_sources_battle_icon_matches,
-                'vpSourcesSpiceMustFlow', pr.vp_sources_spice_must_flow,
-                'vp_sources_spice_must_flow', pr.vp_sources_spice_must_flow,
-                'vpSourcesIntrigueCards', pr.vp_sources_intrigue_cards,
-                'vp_sources_intrigue_cards', pr.vp_sources_intrigue_cards,
-                'vpSourcesTechTiles', pr.vp_sources_tech_tiles,
-                'vp_sources_tech_tiles', pr.vp_sources_tech_tiles,
-                'vpSourcesImperiumCards', pr.vp_sources_imperium_cards,
-                'vp_sources_imperium_cards', pr.vp_sources_imperium_cards,
-                'vpSourcesLeaderAbilities', pr.vp_sources_leader_abilities,
-                'vp_sources_leader_abilities', pr.vp_sources_leader_abilities,
-                'finalRoundVpDelta', pr.final_round_vp_delta,
-                'final_round_vp_delta', pr.final_round_vp_delta
-              ) ||
-              jsonb_build_object(
-                'intrigueCardsPlayed', pr.intrigue_cards_played,
-                'intrigue_cards_played', pr.intrigue_cards_played,
-                'intrigueCardsHeldEndgame', pr.intrigue_cards_held_endgame,
-                'intrigue_cards_held_endgame', pr.intrigue_cards_held_endgame,
-                'conflictCardsWonCount', pr.conflict_cards_won_count,
-                'conflict_cards_won_count', pr.conflict_cards_won_count,
-                'objectiveCard', pr.objective_card,
-                'objective_card', pr.objective_card,
-                'contractsCompletedCount', pr.contracts_completed_count,
-                'contracts_completed_count', pr.contracts_completed_count,
-                'contractsHeldIncomplete', pr.contracts_held_incomplete,
-                'contracts_held_incomplete', pr.contracts_held_incomplete,
-                'techTilesCount', pr.tech_tiles_count,
-                'tech_tiles_count', pr.tech_tiles_count,
-                'controlMarkerCount', pr.control_marker_count,
-                'control_marker_count', pr.control_marker_count,
-                'commanderSkillsCount', pr.commander_skills_count,
-                'commander_skills_count', pr.commander_skills_count,
-                'spiesOnBoardEndgame', pr.spies_on_board_endgame,
-                'spies_on_board_endgame', pr.spies_on_board_endgame,
-                'hasHighCouncil', pr.has_high_council,
-                'has_high_council', pr.has_high_council,
-                'hasSwordmaster', pr.has_swordmaster,
-                'has_swordmaster', pr.has_swordmaster,
-                'hasMakerHooks', pr.has_maker_hooks,
-                'has_maker_hooks', pr.has_maker_hooks,
-                'influence_emperor', pr.influence_emperor,
-                'influence_spacing_guild', pr.influence_spacing_guild,
-                'influence_bene_gesserit', pr.influence_bene_gesserit,
-                'influence_fremen', pr.influence_fremen,
-                'vp_sources_unaccounted', pr.vp_sources_unaccounted,
-                'notes', pr.notes
-              )
+            jsonb_build_object(
+              'resultId', pr.id,
+              'id', pr.id,
+              'playerId', pr.player_id,
+              'player_id', pr.player_id,
+              'playerName', pr.player_name,
+              'player_name', pr.player_name,
+              'rank', pr.rank,
+              'leader', pr.leader_name,
+              'leader_name', pr.leader_name,
+              'leaderName', pr.leader_name,
+              'leaderId', pr.leader_id,
+              'leader_id', pr.leader_id,
+              'strategicArchetypeName', pr.strategic_archetype_name,
+              'strategic_archetype_name', pr.strategic_archetype_name,
+              'strategic_archetype', pr.strategic_archetype_name,
+              'strategicArchetypeId', pr.strategic_archetype_id,
+              'strategic_archetype_id', pr.strategic_archetype_id,
+              'score', pr.score,
+              'victory_points', pr.score,
+              'finalVp', pr.score,
+              'final_vp', pr.score,
+              'turnOrderPosition', pr.turn_order_position,
+              'turn_order_position', pr.turn_order_position,
+              'isSummary', true,
+              'hasFullDetails', false
             ) ORDER BY pr.rank
           ) FILTER (WHERE pr.id IS NOT NULL),
           '[]'::json
@@ -800,9 +736,7 @@ export async function GET(request: NextRequest, { params }: { params: { gameId: 
       ORDER BY p.timestamp DESC
     `
 
-    const hydratedPlaythroughs = await attachTrackedItemsToPlaythroughs(playthroughs)
-
-    return NextResponse.json({ success: true, data: hydratedPlaythroughs })
+    return NextResponse.json({ success: true, data: playthroughs })
   } catch (error) {
     console.error("Error fetching playthroughs:", error)
     return NextResponse.json(
@@ -1064,7 +998,12 @@ export async function POST(request: NextRequest, { params }: { params: { gameId:
 
     const completePlaythrough = await fetchCompletePlaythrough(playthrough.id)
 
-    return NextResponse.json({ success: true, data: completePlaythrough })
+    return NextResponse.json({
+      success: true,
+      data: completePlaythrough
+        ? { ...completePlaythrough, isSummary: false, hasFullDetails: true }
+        : completePlaythrough,
+    })
   } catch (error) {
     console.error("Error creating playthrough:", error)
     return NextResponse.json(

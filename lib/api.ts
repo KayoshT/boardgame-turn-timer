@@ -127,9 +127,24 @@ export const playerApi = {
 }
 
 export const playthroughApi = {
-  async getPlaythroughsForGame(gameId: string): Promise<ApiResponse<any[]>> {
+  async getPlaythroughsForGame(
+    gameId: string,
+    options: { includeDetails?: boolean } = {},
+  ): Promise<ApiResponse<any[]>> {
     try {
-      const response = await fetch(`${API_BASE}/games/${gameId}/playthroughs`)
+      const params = options.includeDetails ? "?includeDetails=true" : ""
+      const response = await fetch(`${API_BASE}/games/${gameId}/playthroughs${params}`)
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error("API Error:", error)
+      return { success: false, error: "Network error" }
+    }
+  },
+
+  async getPlaythrough(gameId: string, playthroughId: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await fetch(`${API_BASE}/games/${gameId}/playthroughs/${playthroughId}`)
       const data = await response.json()
       return data
     } catch (error) {

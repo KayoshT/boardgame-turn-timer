@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql, getUserId } from "@/lib/db"
 import {
+  attachTrackedItemsToPlaythrough,
   getSubmittedTrackedItems,
   replacePlaythroughResultItems,
 } from "@/lib/playthrough-result-items"
@@ -511,6 +512,71 @@ function toResponseResult(row: any) {
   }
 }
 
+export async function GET(request: NextRequest, { params }: { params: { gameId: string; playthroughId: string } }) {
+  try {
+    const userId = getUserId(request)
+    const { gameId, playthroughId } = params
+
+    const [game] = await sql`
+      SELECT g.id, g.group_id
+      FROM games g
+      INNER JOIN group_access ga ON g.group_id = ga.group_id
+      WHERE g.id = ${gameId} AND ga.user_id = ${userId}
+      LIMIT 1
+    `
+
+    if (!game) {
+      return NextResponse.json({ success: false, error: "Game not found or access denied" }, { status: 404 })
+    }
+
+    const [playthrough] = await sql`
+      SELECT
+        id,
+        game_id,
+        group_id,
+        season_id,
+        timestamp,
+        recorded_by,
+        round_count,
+        round_count AS "roundCount",
+        notes
+      FROM playthroughs
+      WHERE id = ${playthroughId} AND game_id = ${gameId}
+      LIMIT 1
+    `
+
+    if (!playthrough) {
+      return NextResponse.json({ success: false, error: "Playthrough not found" }, { status: 404 })
+    }
+
+    const results = await sql`
+      SELECT *
+      FROM playthrough_results
+      WHERE playthrough_id = ${playthroughId}
+      ORDER BY rank
+    `
+
+    const fullPlaythrough = await attachTrackedItemsToPlaythrough({
+      ...playthrough,
+      isSummary: false,
+      hasFullDetails: true,
+      results: results.map(toResponseResult),
+    })
+
+    return NextResponse.json({ success: true, data: fullPlaythrough })
+  } catch (error) {
+    console.error("Error fetching playthrough:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to fetch playthrough",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
+  }
+}
+
 export async function DELETE(request: NextRequest, { params }: { params: { gameId: string; playthroughId: string } }) {
   try {
     const userId = getUserId(request)
@@ -574,7 +640,7 @@ export async function PUT(request: NextRequest, { params }: { params: { gameId: 
     }
 
     const [playthrough] = await sql`
-      SELECT id, game_id, group_id, timestamp, recorded_by, season_id, round_count, notes
+      SELECT id, game_id, group_id, timestamp, recorded_by, season_id, round_count, round_count AS "roundCount", notes
       FROM playthroughs
       WHERE id = ${playthroughId} AND game_id = ${gameId}
       LIMIT 1
@@ -824,7 +890,7 @@ export async function PUT(request: NextRequest, { params }: { params: { gameId: 
     }
 
     const [updatedPlaythrough] = await sql`
-      SELECT id, game_id, group_id, timestamp, recorded_by, season_id, round_count, notes
+      SELECT id, game_id, group_id, timestamp, recorded_by, season_id, round_count, round_count AS "roundCount", notes
       FROM playthroughs
       WHERE id = ${playthroughId}
       LIMIT 1
@@ -832,6 +898,8 @@ export async function PUT(request: NextRequest, { params }: { params: { gameId: 
 
     const response = {
       ...updatedPlaythrough,
+      isSummary: false,
+      hasFullDetails: true,
       results: playthroughResults,
     }
 

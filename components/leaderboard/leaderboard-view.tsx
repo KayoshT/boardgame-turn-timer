@@ -24,6 +24,7 @@ interface LeaderboardViewProps {
   onConcludeSeason: () => Promise<void>
   onFetchSeasons: (groupId: string) => Promise<any[]>
   onFetchSeasonBadges: (groupId: string, seasonId: string) => Promise<any[]>
+  onLoadPlaythrough?: (gameId: string, playthroughId: string) => Promise<any>
   loading?: boolean
   playthroughLoading?: boolean
   seasonLoading?: boolean
@@ -41,6 +42,7 @@ export const LeaderboardView = ({
   onConcludeSeason,
   onFetchSeasons,
   onFetchSeasonBadges,
+  onLoadPlaythrough,
   loading = false,
   playthroughLoading = false,
   seasonLoading = false,
@@ -213,6 +215,7 @@ export const LeaderboardView = ({
               gameType={game.game_type}
               onDeletePlaythrough={handleDeletePlaythrough}
               onUpdatePlaythrough={handleUpdatePlaythrough}
+              onLoadPlaythrough={onLoadPlaythrough}
               loading={playthroughLoading}
             />
           )}
