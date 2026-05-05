@@ -234,7 +234,7 @@ export const PlaythroughDetails = ({ playthrough, gameType }: PlaythroughDetails
               <div>Players: {playthrough.results.length}</div>
               <div>Date: {new Date(playthrough.timestamp).toLocaleDateString()}</div>
               <div>Time: {new Date(playthrough.timestamp).toLocaleTimeString([], { timeStyle: "short" })}</div>
-              {playthrough.round_count && <div>Rounds: {playthrough.round_count}</div>}
+              {(playthrough.round_count ?? playthrough.roundCount) != null && <div>Rounds: {playthrough.round_count ?? playthrough.roundCount}</div>}
               {isDuneGame && <div className="font-medium text-blue-600">Dune: Imperium (Enhanced Stats)</div>}
             </div>
           </div>
