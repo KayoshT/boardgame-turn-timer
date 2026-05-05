@@ -1,5 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql, getUserId } from "@/lib/db"
+import {
+  getSubmittedTrackedItems,
+  replacePlaythroughResultItems,
+} from "@/lib/playthrough-result-items"
 
 function firstDefined<T = unknown>(source: Record<string, any>, keys: string[]): T | undefined {
   for (const key of keys) {
@@ -799,7 +803,24 @@ export async function PUT(request: NextRequest, { params }: { params: { gameId: 
         RETURNING *
       `
 
-      playthroughResults.push(toResponseResult(playthroughResult))
+      const trackedItems = getSubmittedTrackedItems(result)
+
+      await replacePlaythroughResultItems({
+        playthroughId,
+        playthroughResultId: playthroughResult.id,
+        playerId: player.id,
+        items: trackedItems,
+      })
+
+      playthroughResults.push({
+        ...toResponseResult(playthroughResult),
+        trackedItems,
+        playthroughResultItems: trackedItems,
+        playthrough_result_items: trackedItems,
+        acquisitions: trackedItems,
+        playthroughResultAcquisitions: trackedItems,
+        playthrough_result_acquisitions: trackedItems,
+      })
     }
 
     const [updatedPlaythrough] = await sql`

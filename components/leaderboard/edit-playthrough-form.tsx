@@ -3,14 +3,18 @@
 import type React from "react"
 
 import { useEffect, useMemo, useState } from "react"
+import { AcquisitionsEditor } from "@/components/leaderboard/acquisitions-editor"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, ChevronDown, ChevronRight, Edit, Flag, Gem, Landmark, Loader2, NotebookText, PlusCircle, ScrollText, Shield, Swords, Trash2, Trophy, Zap } from "lucide-react"
+import { CheckCircle, ChevronDown, ChevronRight, ChevronUp, Edit, Flag, Gem, Landmark, Loader2, NotebookText, PlusCircle, ScrollText, Shield, Swords, Trash2, Trophy, Zap } from "lucide-react"
+import { DUNE_ACQUISITION_OPTIONS } from "@/lib/dune-acquisition-inventory"
+import { calculateBattleIconVpForResult } from "@/lib/dune-battle-icons"
 import type { Player } from "@/types/leaderboard"
+import type { AcquisitionItemStatus, AcquisitionItemType, PlaythroughResultAcquisitionInput } from "@/types/dune-acquisitions"
 import { getOrdinalSuffix } from "@/utils/leaderboard-utils"
 
 interface EditPlaythroughFormProps {
@@ -88,6 +92,8 @@ interface PlayerRankInput {
   hasSwordmaster?: boolean
   hasMakerHooks?: boolean
 
+  acquisitions?: PlaythroughResultAcquisitionInput[]
+
   notes?: string
 }
 
@@ -158,6 +164,8 @@ const boolFields: PlayerField[] = [
 
 
 function hasAdvancedData(result: PlayerRankInput) {
+  if ((result.acquisitions?.length ?? 0) > 0) return true
+
   const advancedFields: PlayerField[] = [
     ...numberFields,
     ...boolFields,
@@ -213,10 +221,10 @@ function normaliseSelectId(value: string): string | undefined {
 }
 
 const OBJECTIVE_OPTIONS = [
-  { value: "crysknife", label: "Crysknife" },
   { value: "desert_mouse", label: "Desert Mouse" },
+  { value: "desert_mouse_first_player", label: "Desert Mouse (First Player)" },
   { value: "ornithopter", label: "Ornithopter" },
-  { value: "wild", label: "Wild" },
+  { value: "crysknife", label: "Crysknife" },
 ]
 
 type FactionKey = "emperor" | "spacingGuild" | "beneGesserit" | "fremen"
@@ -269,9 +277,9 @@ function calculateFactionVp(result: Record<string, any>): number {
 function enforceFinalConflictWithinTotal<T extends Record<string, any>>(result: T): T {
   const finalVp = result.vpSourcesFinalConflict
 
-  // A positive final-conflict VP is a lower bound on total Conflict VP.
+  // A positive final-conflict VP is a lower bound on total conflict reward VP.
   // A zero final-conflict VP means “no VP from the final conflict”, not
-  // “no VP from earlier conflicts”, so it must not erase total Conflict VP.
+  // “no VP from earlier conflict rewards”, so it must not erase total conflict reward VP.
   if (typeof finalVp !== "number" || !Number.isFinite(finalVp) || finalVp <= 0) return result
 
   const totalVp = result.vpSourcesConflictCards
@@ -329,7 +337,7 @@ function calculateKnownVp(result: Record<string, any>): number {
     numericValue(result.vpSourcesIntrigueCards) +
     numericValue(result.vpSourcesTechTiles) +
     numericValue(result.vpSourcesImperiumCards) +
-    numericValue(result.vpSourcesLeaderAbilities)
+    numericValue(isSteersmanLeader(result) ? result.vpSourcesLeaderAbilities : undefined)
   )
 }
 
@@ -358,6 +366,516 @@ function calculateConflictPlace(results: Array<Record<string, any>>, resultIndex
 }
 
 
+
+function getAcquisitionsFromResult(result: any): PlaythroughResultAcquisitionInput[] {
+  const raw =
+    result?.acquisitions ??
+    result?.resultAcquisitions ??
+    result?.result_acquisitions ??
+    result?.playthroughResultAcquisitions ??
+    result?.playthrough_result_acquisitions
+
+  if (!Array.isArray(raw)) return []
+
+  return raw.map((item: any) => ({
+    itemKey: item.itemKey ?? item.item_key,
+    itemName: item.itemName ?? item.item_name,
+    itemType: item.itemType ?? item.item_type,
+    deckId: item.deckId ?? item.deck_id,
+    source: item.source,
+    acquisitionCount: getNumber(item, "acquisitionCount", "acquisition_count") ?? 1,
+    itemStatus: item.itemStatus ?? item.item_status ?? item.acquisitionMethod ?? item.acquisition_method,
+    vpCount: getNumber(item, "vpCount", "vp_count"),
+    entrySource: item.entrySource ?? item.entry_source ?? "manual",
+    notes: item.notes,
+  })).filter((item: PlaythroughResultAcquisitionInput) => item.itemKey && item.itemName && item.itemType && item.deckId)
+}
+
+function acquisitionCount(item: PlaythroughResultAcquisitionInput): number {
+  return typeof item.acquisitionCount === "number" && Number.isFinite(item.acquisitionCount) && item.acquisitionCount > 0
+    ? Math.trunc(item.acquisitionCount)
+    : 1
+}
+
+function acquisitionStatus(item: PlaythroughResultAcquisitionInput): AcquisitionItemStatus | undefined {
+  return item.itemStatus ?? item.item_status ?? (item.acquisitionMethod as AcquisitionItemStatus | undefined)
+}
+
+function hasAcquisitionType(items: PlaythroughResultAcquisitionInput[], itemType: AcquisitionItemType): boolean {
+  return items.some((item) => item.itemType === itemType)
+}
+
+function countAcquisitions(
+  items: PlaythroughResultAcquisitionInput[],
+  itemType: AcquisitionItemType,
+  statuses?: AcquisitionItemStatus[],
+): number {
+  const allowedStatuses = statuses ? new Set(statuses) : null
+
+  return items.reduce((total, item) => {
+    if (item.itemType !== itemType) return total
+    if (allowedStatuses && !allowedStatuses.has(acquisitionStatus(item) ?? "not_set")) return total
+    return total + acquisitionCount(item)
+  }, 0)
+}
+
+function countAcquisitionsForTypes(
+  items: PlaythroughResultAcquisitionInput[],
+  itemTypes: AcquisitionItemType[],
+  statuses?: AcquisitionItemStatus[],
+): number {
+  const allowedTypes = new Set(itemTypes)
+  const allowedStatuses = statuses ? new Set(statuses) : null
+
+  return items.reduce((total, item) => {
+    if (!allowedTypes.has(item.itemType)) return total
+    if (allowedStatuses && !allowedStatuses.has(acquisitionStatus(item) ?? "not_set")) return total
+    return total + acquisitionCount(item)
+  }, 0)
+}
+
+function validNumber(value: number | undefined): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? Math.trunc(value) : undefined
+}
+
+function syncSummaryCount(
+  currentValue: number | undefined,
+  previousValue: number | undefined,
+  previousFloor: number,
+  nextFloor: number,
+): number | undefined {
+  const current = validNumber(currentValue)
+
+  // Treat the first itemised entry as a helpful default, but preserve explicit
+  // manual values afterwards. This lets a user keep a summary count unset or 0
+  // when they only itemised a partial record of the game.
+  if (typeof current === "number") {
+    if (previousFloor > 0 && current === previousFloor && nextFloor !== previousFloor) {
+      return nextFloor > 0 ? nextFloor : undefined
+    }
+    return current
+  }
+
+  if (nextFloor > 0) return nextFloor
+  return undefined
+}
+
+function summaryTotal(...values: Array<number | undefined>): number | undefined {
+  const validValues = values.filter((value): value is number => typeof value === "number" && Number.isFinite(value))
+  if (validValues.length === 0) return undefined
+  return validValues.reduce((total, value) => total + Math.max(0, Math.trunc(value)), 0)
+}
+
+function isSpiceMustFlowAcquisition(item: PlaythroughResultAcquisitionInput): boolean {
+  return (
+    (item.itemType === "reserve_card" || item.itemType === "imperium_card") &&
+    /the spice must flow/i.test(item.itemName)
+  )
+}
+
+function countSpiceMustFlowAcquisitions(items: PlaythroughResultAcquisitionInput[]): number {
+  return items.reduce((total, item) => {
+    if (!isSpiceMustFlowAcquisition(item)) return total
+    return total + acquisitionCount(item)
+  }, 0)
+}
+
+function getAcquisitionOption(item: PlaythroughResultAcquisitionInput) {
+  return DUNE_ACQUISITION_OPTIONS.find((option) => option.itemKey === item.itemKey)
+}
+
+function acquisitionOptionText(item: PlaythroughResultAcquisitionInput): string {
+  const option = getAcquisitionOption(item)
+  return [option?.effectText, option?.description, option?.searchText].filter(Boolean).join(" ")
+}
+
+function isTrashThisCardVpAcquisition(item: PlaythroughResultAcquisitionInput): boolean {
+  if (item.itemType !== "imperium_card" && item.itemType !== "reserve_card") return false
+  return /trash\s+this\s+card/i.test(acquisitionOptionText(item))
+}
+
+function acquisitionVpCount(item: PlaythroughResultAcquisitionInput): number {
+  const option = getAcquisitionOption(item)
+  if (!option?.vpAvailable || option.vpAvailable <= 0) return 0
+  if (isSpiceMustFlowAcquisition(item)) return 0
+
+  const raw = item.vpCount ?? item.vp_count
+  if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return 0
+
+  const value = Math.trunc(raw)
+
+  if (isTrashThisCardVpAcquisition(item)) {
+    return Math.min(value, Math.trunc(option.vpAvailable))
+  }
+
+  // The row editor owns context-sensitive conflict reward caps, including
+  // sandworm doubling via Maker Hooks. Preserve the entered row value here.
+  if (item.itemType === "conflict_card") return value
+
+  // Some Imperium card abilities can be triggered more than once, so do not
+  // cap their VP entry at the printed metadata flag.
+  if (item.itemType === "imperium_card") return value
+
+  return Math.min(value, Math.trunc(option.vpAvailable))
+}
+
+function hasVpTrackedAcquisitions(items: PlaythroughResultAcquisitionInput[], itemTypes: AcquisitionItemType[]): boolean {
+  const allowedTypes = new Set(itemTypes)
+  return items.some((item) => allowedTypes.has(item.itemType) && acquisitionVpCount(item) > 0)
+}
+
+function sumAcquisitionVp(items: PlaythroughResultAcquisitionInput[], itemTypes: AcquisitionItemType[]): number {
+  const allowedTypes = new Set(itemTypes)
+  return items.reduce((total, item) => {
+    if (!allowedTypes.has(item.itemType)) return total
+    return total + acquisitionVpCount(item)
+  }, 0)
+}
+
+const BATTLE_ICON_INTRIGUE_VP_NAMES = new Set(["crysknife", "desert mouse", "ornithopter", "grasp arrakis"])
+
+function isBattleIconIntrigueVpSource(item: PlaythroughResultAcquisitionInput): boolean {
+  return item.itemType === "intrigue_card" && BATTLE_ICON_INTRIGUE_VP_NAMES.has(item.itemName.trim().toLowerCase())
+}
+
+function sumSupportedIntrigueVp(result: { acquisitions?: PlaythroughResultAcquisitionInput[] | null; objectiveCard?: string | null; objective_card?: string | null }): number {
+  const acquisitions = result.acquisitions ?? []
+  const nonBattleIconIntrigueVp = acquisitions.reduce((total, item) => {
+    if (item.itemType !== "intrigue_card") return total
+    if (isBattleIconIntrigueVpSource(item)) return total
+    return total + acquisitionVpCount(item)
+  }, 0)
+
+  return nonBattleIconIntrigueVp + calculateBattleIconVpForResult(result).iconIntrigueVp
+}
+
+function acquisitionStrengthCount(item: PlaythroughResultAcquisitionInput): number {
+  const raw = item.strengthCount ?? item.strength_count
+  if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return 0
+  return Math.trunc(raw)
+}
+
+function hasStrengthTrackedAcquisitions(items: PlaythroughResultAcquisitionInput[], itemTypes: AcquisitionItemType[]): boolean {
+  const allowedTypes = new Set(itemTypes)
+  return items.some((item) => allowedTypes.has(item.itemType) && acquisitionStrengthCount(item) > 0)
+}
+
+function sumAcquisitionStrength(items: PlaythroughResultAcquisitionInput[], itemTypes: AcquisitionItemType[]): number {
+  const allowedTypes = new Set(itemTypes)
+  return items.reduce((total, item) => {
+    if (!allowedTypes.has(item.itemType)) return total
+    return total + acquisitionStrengthCount(item)
+  }, 0)
+}
+
+function syncStrengthSummaryField(
+  previousAcquisitions: PlaythroughResultAcquisitionInput[],
+  acquisitions: PlaythroughResultAcquisitionInput[],
+  previousValue: number | undefined,
+  currentValue: number | undefined,
+  itemTypes: AcquisitionItemType[],
+): number | undefined {
+  const previousHadTrackedItems = hasStrengthTrackedAcquisitions(previousAcquisitions, itemTypes)
+  const nextHasTrackedItems = hasStrengthTrackedAcquisitions(acquisitions, itemTypes)
+  const previousSum = sumAcquisitionStrength(previousAcquisitions, itemTypes)
+  const nextSum = sumAcquisitionStrength(acquisitions, itemTypes)
+
+  if (nextHasTrackedItems) return nextSum
+
+  const current = validNumber(currentValue)
+  if (previousHadTrackedItems && current === previousSum) return undefined
+  return current
+}
+
+function getSpiceMustFlowOption() {
+  return DUNE_ACQUISITION_OPTIONS.find(
+    (option) =>
+      option.itemType === "reserve_card" &&
+      /the spice must flow/i.test(option.itemName),
+  )
+}
+
+function isNavigationCard08Acquisition(item: PlaythroughResultAcquisitionInput): boolean {
+  return item.itemType === "navigation_card" && /navigation card 08/i.test(item.itemName)
+}
+
+function getNavigationCard08Option() {
+  return DUNE_ACQUISITION_OPTIONS.find(
+    (option) => option.itemType === "navigation_card" && /navigation card 08/i.test(option.itemName),
+  )
+}
+
+function syncNavigationCard08FromLeaderVp(
+  acquisitions: PlaythroughResultAcquisitionInput[] = [],
+  leaderVp: number | undefined,
+): PlaythroughResultAcquisitionInput[] {
+  const requested = typeof leaderVp === "number" && Number.isFinite(leaderVp) && leaderVp > 0 ? 1 : 0
+  const withoutNav08 = acquisitions.filter((item) => !isNavigationCard08Acquisition(item))
+  if (requested === 0) return withoutNav08
+
+  const existing = acquisitions.find(isNavigationCard08Acquisition)
+  const option = getNavigationCard08Option()
+  if (!existing && !option) return acquisitions
+
+  const base: PlaythroughResultAcquisitionInput = existing ?? {
+    itemKey: option!.itemKey,
+    itemName: option!.itemName,
+    itemType: option!.itemType,
+    deckId: option!.deckId,
+    source: option!.source,
+    itemStatus: "played",
+    entrySource: "auto",
+    acquisitionCount: 1,
+    vpCount: 1,
+  }
+
+  return [...withoutNav08, { ...base, acquisitionCount: 1, itemStatus: "played", vpCount: 1 }]
+}
+
+function removeNavigationAcquisitions(acquisitions: PlaythroughResultAcquisitionInput[] = []): PlaythroughResultAcquisitionInput[] {
+  return acquisitions.filter((item) => item.itemType !== "navigation_card")
+}
+
+function syncSpiceMustFlowAcquisitionFromVp(
+  acquisitions: PlaythroughResultAcquisitionInput[] = [],
+  vpCount: number | undefined,
+): PlaythroughResultAcquisitionInput[] {
+  const requestedCount = typeof vpCount === "number" && Number.isFinite(vpCount) && vpCount > 0 ? Math.trunc(vpCount) : 0
+  const withoutSmf = acquisitions.filter((item) => !isSpiceMustFlowAcquisition(item))
+  if (requestedCount === 0) return withoutSmf
+
+  const existing = acquisitions.find(isSpiceMustFlowAcquisition)
+  const option = getSpiceMustFlowOption()
+  if (!existing && !option) return acquisitions
+
+  const copyCount = option?.copyCount
+  const count = typeof copyCount === "number" && copyCount > 0 ? Math.min(requestedCount, copyCount) : requestedCount
+
+  const base: PlaythroughResultAcquisitionInput = existing ?? {
+    itemKey: option!.itemKey,
+    itemName: option!.itemName,
+    itemType: option!.itemType,
+    deckId: option!.deckId,
+    source: option!.source,
+    itemStatus: "in_final_deck",
+    entrySource: "auto",
+    vpCount: 0,
+    acquisitionCount: count,
+  }
+
+  return [...withoutSmf, { ...base, acquisitionCount: count }]
+}
+
+function syncVpSummaryField(
+  previousAcquisitions: PlaythroughResultAcquisitionInput[],
+  acquisitions: PlaythroughResultAcquisitionInput[],
+  previousValue: number | undefined,
+  currentValue: number | undefined,
+  itemTypes: AcquisitionItemType[],
+): number | undefined {
+  const previousHadTrackedItems = hasVpTrackedAcquisitions(previousAcquisitions, itemTypes)
+  const nextHasTrackedItems = hasVpTrackedAcquisitions(acquisitions, itemTypes)
+  const previousSum = sumAcquisitionVp(previousAcquisitions, itemTypes)
+  const nextSum = sumAcquisitionVp(acquisitions, itemTypes)
+
+  if (nextHasTrackedItems) return nextSum
+
+  const current = validNumber(currentValue)
+  if (previousHadTrackedItems && current === previousSum) return undefined
+  return current
+}
+
+function syncAcquisitionSummaryFields<T extends PlayerRankInput>(previous: PlayerRankInput, result: T): T {
+  const previousAcquisitions = previous.acquisitions ?? []
+  const acquisitions = result.acquisitions ?? []
+  const next: PlayerRankInput = { ...result }
+  const acquisitionsChanged = previousAcquisitions !== acquisitions
+
+  const shouldSync = (itemType: AcquisitionItemType) =>
+    acquisitionsChanged && (hasAcquisitionType(previousAcquisitions, itemType) || hasAcquisitionType(acquisitions, itemType))
+
+  if (shouldSync("imperium_card") || shouldSync("reserve_card") || shouldSync("starter_card")) {
+    const previousTrashedFloor = countAcquisitionsForTypes(previousAcquisitions, ["imperium_card", "reserve_card", "starter_card"], ["trashed"])
+    const nextTrashedFloor = countAcquisitionsForTypes(acquisitions, ["imperium_card", "reserve_card", "starter_card"], ["trashed"])
+    next.cardsTrashedCount = syncSummaryCount(
+      next.cardsTrashedCount,
+      previous.cardsTrashedCount,
+      previousTrashedFloor,
+      nextTrashedFloor,
+    )
+
+    const previousDeckFloor = countAcquisitionsForTypes(previousAcquisitions, ["imperium_card", "reserve_card", "starter_card"], ["in_final_deck"])
+    const nextDeckFloor = countAcquisitionsForTypes(acquisitions, ["imperium_card", "reserve_card", "starter_card"], ["in_final_deck"])
+    next.finalDeckSize = syncSummaryCount(
+      next.finalDeckSize,
+      previous.finalDeckSize,
+      previousDeckFloor,
+      nextDeckFloor,
+    )
+  }
+
+  if (shouldSync("contract")) {
+    const previousCompletedFloor = countAcquisitions(previousAcquisitions, "contract", ["completed"])
+    const nextCompletedFloor = countAcquisitions(acquisitions, "contract", ["completed"])
+    const previousHeldFloor = countAcquisitions(previousAcquisitions, "contract", ["held"])
+    const nextHeldFloor = countAcquisitions(acquisitions, "contract", ["held"])
+
+    next.contractsCompletedCount = syncSummaryCount(
+      next.contractsCompletedCount,
+      previous.contractsCompletedCount,
+      previousCompletedFloor,
+      nextCompletedFloor,
+    )
+    next.contractsHeldIncomplete = syncSummaryCount(
+      next.contractsHeldIncomplete,
+      previous.contractsHeldIncomplete,
+      previousHeldFloor,
+      nextHeldFloor,
+    )
+  }
+
+  if (shouldSync("intrigue_card")) {
+    const previousPlayedFloor = countAcquisitions(previousAcquisitions, "intrigue_card", ["played"])
+    const nextPlayedFloor = countAcquisitions(acquisitions, "intrigue_card", ["played"])
+    const previousHeldFloor = countAcquisitions(previousAcquisitions, "intrigue_card", ["held"])
+    const nextHeldFloor = countAcquisitions(acquisitions, "intrigue_card", ["held"])
+
+    next.intrigueCardsPlayed = syncSummaryCount(
+      next.intrigueCardsPlayed,
+      previous.intrigueCardsPlayed,
+      previousPlayedFloor,
+      nextPlayedFloor,
+    )
+    next.intrigueCardsHeldEndgame = syncSummaryCount(
+      next.intrigueCardsHeldEndgame,
+      previous.intrigueCardsHeldEndgame,
+      previousHeldFloor,
+      nextHeldFloor,
+    )
+  }
+
+  if (shouldSync("tech_tile")) {
+    const previousFloor = countAcquisitions(previousAcquisitions, "tech_tile")
+    const nextFloor = countAcquisitions(acquisitions, "tech_tile")
+    next.techTilesCount = syncSummaryCount(next.techTilesCount, previous.techTilesCount, previousFloor, nextFloor)
+  }
+
+  if (shouldSync("sardaukar_skill")) {
+    const previousFloor = countAcquisitions(previousAcquisitions, "sardaukar_skill")
+    const nextFloor = countAcquisitions(acquisitions, "sardaukar_skill")
+    next.commanderSkillsCount = syncSummaryCount(
+      next.commanderSkillsCount,
+      previous.commanderSkillsCount,
+      previousFloor,
+      nextFloor,
+    )
+  }
+
+  if (shouldSync("conflict_card")) {
+    const previousFloor = countAcquisitions(previousAcquisitions, "conflict_card", ["won"])
+    const nextFloor = countAcquisitions(acquisitions, "conflict_card", ["won"])
+    next.conflictCardsWonCount = syncSummaryCount(
+      next.conflictCardsWonCount,
+      previous.conflictCardsWonCount,
+      previousFloor,
+      nextFloor,
+    )
+  }
+
+  if (acquisitionsChanged) {
+    next.vpSourcesConflictCards = syncVpSummaryField(
+      previousAcquisitions,
+      acquisitions,
+      previous.vpSourcesConflictCards,
+      next.vpSourcesConflictCards,
+      ["conflict_card"],
+    )
+
+    next.vpSourcesImperiumCards = syncVpSummaryField(
+      previousAcquisitions,
+      acquisitions,
+      previous.vpSourcesImperiumCards,
+      next.vpSourcesImperiumCards,
+      ["imperium_card", "reserve_card"],
+    )
+
+    next.vpSourcesIntrigueCards = syncVpSummaryField(
+      previousAcquisitions,
+      acquisitions,
+      previous.vpSourcesIntrigueCards,
+      next.vpSourcesIntrigueCards,
+      ["intrigue_card"],
+    )
+
+    if (hasVpTrackedAcquisitions(acquisitions, ["intrigue_card"])) {
+      next.vpSourcesIntrigueCards = sumSupportedIntrigueVp(next)
+    }
+
+    next.vpSourcesTechTiles = syncVpSummaryField(
+      previousAcquisitions,
+      acquisitions,
+      previous.vpSourcesTechTiles,
+      next.vpSourcesTechTiles,
+      ["tech_tile"],
+    )
+
+    next.vpSourcesLeaderAbilities = syncVpSummaryField(
+      previousAcquisitions,
+      acquisitions,
+      previous.vpSourcesLeaderAbilities,
+      next.vpSourcesLeaderAbilities,
+      ["navigation_card"],
+    )
+
+    next.finalConflictStrengthSourcesCommanderSkills = syncStrengthSummaryField(
+      previousAcquisitions,
+      acquisitions,
+      previous.finalConflictStrengthSourcesCommanderSkills,
+      next.finalConflictStrengthSourcesCommanderSkills,
+      ["sardaukar_skill"],
+    )
+
+    next.finalConflictStrengthSourcesIntrigue = syncStrengthSummaryField(
+      previousAcquisitions,
+      acquisitions,
+      previous.finalConflictStrengthSourcesIntrigue,
+      next.finalConflictStrengthSourcesIntrigue,
+      ["intrigue_card"],
+    )
+
+    next.finalConflictStrengthSourcesImperium = syncStrengthSummaryField(
+      previousAcquisitions,
+      acquisitions,
+      previous.finalConflictStrengthSourcesImperium,
+      next.finalConflictStrengthSourcesImperium,
+      ["imperium_card", "reserve_card"],
+    )
+
+    next.finalConflictStrengthSourcesTech = syncStrengthSummaryField(
+      previousAcquisitions,
+      acquisitions,
+      previous.finalConflictStrengthSourcesTech,
+      next.finalConflictStrengthSourcesTech,
+      ["tech_tile"],
+    )
+
+    next.vpSourcesBattleIconMatches = syncBattleIconVpSummaryField(previous, next).vpSourcesBattleIconMatches
+
+    const previousSmfCount = countSpiceMustFlowAcquisitions(previousAcquisitions)
+    const nextSmfCount = countSpiceMustFlowAcquisitions(acquisitions)
+    if (previousSmfCount > 0 || nextSmfCount > 0) {
+      next.vpSourcesSpiceMustFlow = syncSummaryCount(
+        next.vpSourcesSpiceMustFlow,
+        previous.vpSourcesSpiceMustFlow,
+        previousSmfCount,
+        nextSmfCount,
+      )
+    }
+  }
+
+  return next as T
+}
+
 function isBlankValue(value: unknown): boolean {
   return value === undefined || value === null || value === ""
 }
@@ -374,6 +892,69 @@ function isSteersmanLeader(result: Record<string, any>): boolean {
   return /steersman|yr['’]?koon/i.test(getLeaderLabel(result))
 }
 
+function isStabanLeader(result: Record<string, any>): boolean {
+  return /staban/i.test(getLeaderLabel(result))
+}
+
+function isStarterDeckAcquisition(item: PlaythroughResultAcquisitionInput): boolean {
+  return item.itemType === "starter_card" || item.deckId === "Starter"
+}
+
+function starterOptionsForLeader(result: Record<string, any>) {
+  return DUNE_ACQUISITION_OPTIONS.filter((option) => {
+    if (option.itemType !== "starter_card") return false
+    if (isSteersmanLeader(result) && /signet\s*ring/i.test(option.itemName)) return false
+    if (isStabanLeader(result) && /diplomacy/i.test(option.itemName)) return false
+    return true
+  })
+}
+
+function starterDeckDefaultsForLeader(result: Record<string, any>): PlaythroughResultAcquisitionInput[] {
+  return starterOptionsForLeader(result).map((option) => ({
+    itemKey: option.itemKey,
+    itemName: option.itemName,
+    itemType: option.itemType,
+    deckId: option.deckId,
+    source: option.source,
+    acquisitionCount: option.copyCount && option.copyCount > 0 ? option.copyCount : 1,
+    itemStatus: "in_final_deck",
+    entrySource: "auto",
+    vpCount: 0,
+    strengthCount: 0,
+  }))
+}
+
+function syncStarterDeckForLeader(
+  acquisitions: PlaythroughResultAcquisitionInput[] = [],
+  result: Record<string, any>,
+): PlaythroughResultAcquisitionInput[] {
+  const defaults = starterDeckDefaultsForLeader(result)
+  if (defaults.length === 0) return acquisitions
+
+  const existingStarters = new Map(
+    acquisitions.filter(isStarterDeckAcquisition).map((item) => [item.itemKey, item] as const),
+  )
+  const nonStarters = acquisitions.filter((item) => !isStarterDeckAcquisition(item))
+  const starters = defaults.map((starter) => ({ ...starter, ...(existingStarters.get(starter.itemKey) ?? {}) }))
+
+  return [...nonStarters, ...starters]
+}
+
+function withStarterDeckDefaults<T extends Record<string, any>>(result: T): T {
+  const acquisitions = syncStarterDeckForLeader(result.acquisitions ?? [], result)
+  if (acquisitions === result.acquisitions) return result
+
+  const next: Record<string, any> = { ...result, acquisitions }
+  if (isBlankValue(next.finalDeckSize)) {
+    next.finalDeckSize = countAcquisitionsForTypes(acquisitions, ["starter_card"], ["in_final_deck"])
+  }
+  if (isBlankValue(next.cardsTrashedCount)) {
+    next.cardsTrashedCount = countAcquisitionsForTypes(acquisitions, ["starter_card"], ["trashed"])
+  }
+
+  return next as T
+}
+
 function displayMetric(value: unknown): string {
   if (value === undefined || value === null || value === "") return "—"
   return String(value)
@@ -384,16 +965,25 @@ function getNumericLockReason(result: Record<string, any>, field: string): strin
     return "locked by Tech tiles = 0"
   }
 
-  if (field === "finalConflictStrengthSourcesCommanderSkills" && isZero(result.commanderSkillsCount)) {
+  if (field === "finalConflictStrengthSourcesIntrigue" && isZero(result.intrigueCardsPlayed)) {
+    return "locked by Intrigues played = 0"
+  }
+
+  if (
+    (field === "finalConflictStrengthSourcesCommanderSkills" ||
+      field === "finalConflictDeployedCommanders" ||
+      field === "finalConflictGarrisonCommanders") &&
+    isZero(result.commanderSkillsCount)
+  ) {
     return "locked by Cmdr Skills = 0"
+  }
+
+  if (field === "finalConflictDeployedSandworms" && result.hasMakerHooks === false) {
+    return "locked by Maker Hooks = No"
   }
 
   if (field === "vpSourcesIntrigueCards" && isZero(result.intrigueCardsPlayed) && isZero(result.intrigueCardsHeldEndgame)) {
     return "locked by Intrigues played/held = 0"
-  }
-
-  if (field === "vpSourcesLeaderAbilities" && !isSteersmanLeader(result)) {
-    return "locked for this leader"
   }
 
   return undefined
@@ -411,14 +1001,22 @@ function applyCountImpliedZeroes<T extends Record<string, any>>(result: T): T {
     if (isBlankValue((next as Record<string, any>).finalConflictStrengthSourcesCommanderSkills)) {
       (next as Record<string, any>).finalConflictStrengthSourcesCommanderSkills = 0
     }
+    if (isBlankValue((next as Record<string, any>).finalConflictDeployedCommanders)) {
+      (next as Record<string, any>).finalConflictDeployedCommanders = 0
+    }
+    if (isBlankValue((next as Record<string, any>).finalConflictGarrisonCommanders)) {
+      (next as Record<string, any>).finalConflictGarrisonCommanders = 0
+    }
+  }
+
+  if (next.hasMakerHooks === false) {
+    if (isBlankValue((next as Record<string, any>).finalConflictDeployedSandworms)) {
+      (next as Record<string, any>).finalConflictDeployedSandworms = 0
+    }
   }
 
   if (isZero(next.intrigueCardsPlayed) && isZero(next.intrigueCardsHeldEndgame)) {
     if (isBlankValue((next as Record<string, any>).vpSourcesIntrigueCards)) (next as Record<string, any>).vpSourcesIntrigueCards = 0
-  }
-
-  if (!isSteersmanLeader(next) && isBlankValue((next as Record<string, any>).vpSourcesLeaderAbilities)) {
-    (next as Record<string, any>).vpSourcesLeaderAbilities = 0
   }
 
   return next as T
@@ -451,6 +1049,74 @@ function calculateUnaccountedVp(result: Record<string, any>): number | undefined
   return typeof result.score === "number" && Number.isFinite(result.score)
     ? result.score - calculateKnownVp(result)
     : undefined
+}
+
+function applyBattleIconVpAutomation<T extends Record<string, any>>(result: T): T {
+  const breakdown = calculateBattleIconVpForResult(result)
+  if (!breakdown.hasInputs) return result
+
+  const current = validNumber(result.vpSourcesBattleIconMatches)
+  const floor = breakdown.battleIconVp
+
+  return {
+    ...result,
+    vpSourcesBattleIconMatches: current === undefined || current < floor ? floor : current,
+  }
+}
+
+function syncBattleIconVpSummaryField<T extends Record<string, any>>(previous: Record<string, any>, result: T): T {
+  const previousBreakdown = calculateBattleIconVpForResult(previous)
+  const nextBreakdown = calculateBattleIconVpForResult(result)
+
+  if (!previousBreakdown.hasInputs && !nextBreakdown.hasInputs) return result
+
+  const previousValue = validNumber(previous.vpSourcesBattleIconMatches)
+  const currentValue = validNumber(result.vpSourcesBattleIconMatches)
+  const previousFloor = previousBreakdown.battleIconVp
+  const nextFloor = nextBreakdown.battleIconVp
+
+  if (currentValue === undefined) {
+    return { ...result, vpSourcesBattleIconMatches: nextFloor }
+  }
+
+  const lookedDerivedBefore = previousValue === undefined || previousValue === previousFloor
+  if (lookedDerivedBefore && currentValue === previousValue) {
+    return { ...result, vpSourcesBattleIconMatches: nextFloor }
+  }
+
+  return {
+    ...result,
+    vpSourcesBattleIconMatches: Math.max(currentValue, nextFloor),
+  }
+}
+
+function labelledCount(label: string, count: number | undefined): string | null {
+  if (!count || count <= 0) return null
+  return count > 1 ? `${label} ×${count}` : label
+}
+
+function battleIconSourceBadges(breakdown: ReturnType<typeof calculateBattleIconVpForResult>) {
+  const conflictBadges: Record<string, string[]> = {}
+  for (const [itemKey, usage] of Object.entries(breakdown.conflictUsageByItemKey)) {
+    const badges = [
+      labelledCount("Matched", usage.forced),
+      labelledCount("Used by Intrigue", usage.intrigue),
+      labelledCount("Wild match", usage.wild),
+      labelledCount("Face-up", usage.remaining),
+    ].filter((badge): badge is string => Boolean(badge))
+    if (badges.length > 0) conflictBadges[itemKey] = badges
+  }
+
+  const intrigueBadges: Record<string, string[]> = {}
+  for (const [itemKey, usage] of Object.entries(breakdown.intrigueUsageByItemKey)) {
+    const badges = [
+      labelledCount("Used", usage.used),
+      labelledCount("Unsupported", usage.unsupported),
+    ].filter((badge): badge is string => Boolean(badge))
+    if (badges.length > 0) intrigueBadges[itemKey] = badges
+  }
+
+  return { conflictBadges, intrigueBadges }
 }
 
 function applyAutoAllianceForFaction<T extends Record<string, any>>(results: T[], factionKey: FactionKey): T[] {
@@ -526,7 +1192,6 @@ function zeroBlankVpSourcesWhenBalanced<T extends Record<string, any>>(result: T
     "vpSourcesIntrigueCards" as keyof T,
     "vpSourcesTechTiles" as keyof T,
     "vpSourcesImperiumCards" as keyof T,
-    "vpSourcesLeaderAbilities" as keyof T,
   ]
 
   const next = { ...result }
@@ -540,7 +1205,8 @@ function zeroBlankVpSourcesWhenBalanced<T extends Record<string, any>>(result: T
 
 function withDerivedStats<T extends Record<string, any>>(result: T, allResults: T[], resultIndex: number): T {
   const countAdjusted = applyCountImpliedZeroes(result)
-  const conflictAdjusted = enforceFinalConflictWithinTotal(countAdjusted)
+  const battleIconAdjusted = applyBattleIconVpAutomation(countAdjusted)
+  const conflictAdjusted = enforceFinalConflictWithinTotal(battleIconAdjusted)
   const vpSourcesFactions = calculateFactionVp(conflictAdjusted)
   const finalConflictPlace = calculateConflictPlace(allResults, resultIndex)
 
@@ -563,17 +1229,65 @@ function withDerivedStats<T extends Record<string, any>>(result: T, allResults: 
   }
 }
 
+function isFirstPlayerObjective(value: unknown): boolean {
+  return String(value ?? "").toLowerCase().replace(/[\s_-]+/g, "_") === "desert_mouse_first_player"
+}
+
+function applyTurnOrderDefaults<T extends Record<string, any>>(results: T[]): T[] {
+  const playerCount = results.length
+  if (playerCount <= 0) return results
+
+  let next = results.map((result) =>
+    isFirstPlayerObjective(result.objectiveCard ?? result.objective_card) && result.turnOrderPosition !== 1
+      ? ({ ...result, turnOrderPosition: 1 } as T)
+      : result,
+  )
+
+  const validOrders = next
+    .map((result) => result.turnOrderPosition)
+    .filter((value): value is number =>
+      typeof value === "number" && Number.isFinite(value) && value >= 1 && value <= playerCount,
+    )
+
+  const uniqueOrders = new Set(validOrders)
+  if (uniqueOrders.size !== validOrders.length) return next
+
+  const unsetIndexes = next
+    .map((result, index) => ({ result, index }))
+    .filter(({ result }) => {
+      const value = result.turnOrderPosition
+      return !(typeof value === "number" && Number.isFinite(value) && value >= 1 && value <= playerCount)
+    })
+    .map(({ index }) => index)
+
+  if (unsetIndexes.length !== 1 || uniqueOrders.size !== playerCount - 1) return next
+
+  const missingOrder = Array.from({ length: playerCount }, (_, index) => index + 1).find(
+    (order) => !uniqueOrders.has(order),
+  )
+
+  if (missingOrder === undefined) return next
+
+  next = next.map((result, index) =>
+    index === unsetIndexes[0] ? ({ ...result, turnOrderPosition: missingOrder } as T) : result,
+  )
+
+  return next
+}
+
 function deriveResultSet<T extends Record<string, any>>(
   results: T[],
   options: { changedInfluenceFaction?: FactionKey; defaultBaseVp?: number } = {},
 ): T[] {
   let next = results.map((result) => {
     const withBase =
-      result.vpSourcesBase === undefined && options.defaultBaseVp !== undefined
+      options.defaultBaseVp !== undefined
         ? { ...result, vpSourcesBase: options.defaultBaseVp }
         : result
     return withBase as T
   })
+
+  next = applyTurnOrderDefaults(next)
 
   if (options.changedInfluenceFaction) {
     next = applyAutoAllianceForFaction(next, options.changedInfluenceFaction)
@@ -588,19 +1302,39 @@ function StatSection({
   description,
   icon: Icon,
   children,
+  defaultOpen = true,
+  summary,
 }: {
   title: string
   description?: string
   icon: React.ComponentType<{ className?: string }>
   children: React.ReactNode
+  defaultOpen?: boolean
+  summary?: React.ReactNode
 }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen)
+
   return (
     <div className="rounded-xl border bg-white/80 p-4 shadow-sm">
-      <div className="mb-3 flex items-center gap-2">
-        <Icon className="h-4 w-4 text-amber-600" />
-        <h5 className="text-sm font-semibold text-slate-900">{title}</h5>
-      </div>
-      {children}
+      <button
+        type="button"
+        className="flex w-full items-start justify-between gap-3 text-left"
+        onClick={() => setIsOpen((current) => !current)}
+        aria-expanded={isOpen}
+      >
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <Icon className="h-4 w-4 shrink-0 text-amber-600" />
+            <h5 className="text-sm font-semibold text-slate-900">{title}</h5>
+          </div>
+          {description && <p className="mt-1 text-xs text-slate-500">{description}</p>}
+          {summary && <div className="mt-2 flex flex-wrap gap-1.5">{summary}</div>}
+        </div>
+        <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-amber-300 hover:text-amber-700">
+          {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </span>
+      </button>
+      {isOpen && <div className="mt-3">{children}</div>}
     </div>
   )
 }
@@ -614,13 +1348,186 @@ function StatSubsection({ title, children, className }: { title: string; childre
   )
 }
 
+function LightSubsection({
+  title,
+  children,
+  className,
+  action,
+}: {
+  title: string
+  children: React.ReactNode
+  className?: string
+  action?: React.ReactNode
+}) {
+  return (
+    <div className={`border-t border-slate-200/80 pt-3 first:border-t-0 first:pt-0 ${className ?? ""}`}>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <h6 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{title}</h6>
+        {action}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+
+type VpRailSegment = {
+  key: string
+  label: string
+  shortLabel: string
+  count: number
+  className: string
+  title: string
+}
+
+function positiveInt(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? Math.trunc(value) : 0
+}
+
+function VpRail({ result, playerCount, action }: { result: Record<string, any>; playerCount: number; action?: React.ReactNode }) {
+  const baseVp = positiveInt(result.vpSourcesBase ?? (playerCount === 4 ? 1 : 0))
+  const segments: VpRailSegment[] = [
+    {
+      key: "base",
+      label: "Base",
+      shortLabel: "B",
+      count: baseVp,
+      className: "border-slate-300 bg-slate-100 text-slate-700",
+      title: "Base VP",
+    },
+    {
+      key: "faction",
+      label: "Faction",
+      shortLabel: "F",
+      count: positiveInt(calculateFactionVp(result)),
+      className: "border-emerald-300 bg-emerald-50 text-emerald-800",
+      title: "Faction track and alliance VP",
+    },
+    {
+      key: "conflict",
+      label: "Conflict rewards",
+      shortLabel: "CR",
+      count: positiveInt(result.vpSourcesConflictCards),
+      className: "border-orange-300 bg-orange-50 text-orange-800",
+      title: "Conflict reward VP",
+    },
+    {
+      key: "battle-icons",
+      label: "Battle icons",
+      shortLabel: "BI",
+      count: positiveInt(result.vpSourcesBattleIconMatches),
+      className: "border-rose-300 bg-rose-50 text-rose-800",
+      title: "Battle icon match VP",
+    },
+    {
+      key: "smf",
+      label: "Spice Must Flow",
+      shortLabel: "SMF",
+      count: positiveInt(result.vpSourcesSpiceMustFlow),
+      className: "border-amber-300 bg-amber-50 text-amber-800",
+      title: "The Spice Must Flow VP",
+    },
+    {
+      key: "intrigue",
+      label: "Intrigue",
+      shortLabel: "I",
+      count: positiveInt(result.vpSourcesIntrigueCards),
+      className: "border-purple-300 bg-purple-50 text-purple-800",
+      title: "Intrigue card VP",
+    },
+    {
+      key: "tech",
+      label: "Tech",
+      shortLabel: "T",
+      count: positiveInt(result.vpSourcesTechTiles),
+      className: "border-cyan-300 bg-cyan-50 text-cyan-800",
+      title: "Tech tile VP",
+    },
+    {
+      key: "imperium",
+      label: "Deck cards",
+      shortLabel: "Deck",
+      count: positiveInt(result.vpSourcesImperiumCards),
+      className: "border-blue-300 bg-blue-50 text-blue-800",
+      title: "Imperium/Reserve card VP",
+    },
+    {
+      key: "leader",
+      label: "Leader",
+      shortLabel: "L",
+      count: positiveInt(isSteersmanLeader(result) ? result.vpSourcesLeaderAbilities : undefined),
+      className: "border-indigo-300 bg-indigo-50 text-indigo-800",
+      title: "Leader ability VP",
+    },
+  ]
+
+  const knownVp = segments.reduce((total, segment) => total + segment.count, 0)
+  const finalVp = positiveInt(result.score)
+  const unaccountedVp = typeof result.score === "number" && Number.isFinite(result.score) ? Math.max(0, Math.trunc(result.score) - knownVp) : 0
+  const overVp = typeof result.score === "number" && Number.isFinite(result.score) ? Math.max(0, knownVp - Math.trunc(result.score)) : 0
+  const visibleSegments = segments.filter((segment) => segment.count > 0)
+  const tokens = [
+    ...visibleSegments.flatMap((segment) =>
+      Array.from({ length: segment.count }, (_, tokenIndex) => ({ ...segment, tokenKey: `${segment.key}-${tokenIndex}` })),
+    ),
+    ...Array.from({ length: unaccountedVp }, (_, tokenIndex) => ({
+      key: "unaccounted",
+      tokenKey: `unaccounted-${tokenIndex}`,
+      label: "Unaccounted",
+      shortLabel: "?",
+      count: 1,
+      className: "border-slate-200 bg-slate-100 text-slate-400 opacity-70",
+      title: "Unaccounted VP",
+    })),
+  ]
+
+  return (
+    <div className="mt-3 rounded-xl border bg-slate-50/80 p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">VP Track</div>
+          {typeof result.score === "number" && Number.isFinite(result.score) && (
+            <div className="text-[11px] text-slate-500">{finalVp} total</div>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {overVp > 0 && (
+            <Badge variant="outline" className="border-rose-200 bg-rose-50 text-rose-700">
+              {overVp} over final
+            </Badge>
+          )}
+          {action}
+        </div>
+      </div>
+
+      {tokens.length > 0 ? (
+        <div className="mt-3 flex flex-wrap gap-1.5" aria-label="Read-only VP track">
+          {tokens.map((token) => (
+            <span
+              key={token.tokenKey}
+              title={token.title}
+              className={`inline-flex h-7 min-w-7 items-center justify-center rounded-full border px-2 text-[10px] font-bold tabular-nums shadow-sm ${token.className}`}
+            >
+              {token.shortLabel}
+            </span>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-3 rounded-lg border border-dashed border-slate-200 bg-white/70 px-3 py-2 text-xs text-slate-500">
+          Add VP details to preview the score track.
+        </div>
+      )}
+    </div>
+  )
+}
+
 function SummaryChips({ items }: { items: Array<{ label: string; value: unknown; tone?: "default" | "good" | "warn" }> }) {
   return (
-    <div className="mt-3 flex flex-wrap gap-2.5 rounded-xl border bg-white/80 p-3 text-sm text-slate-700">
+    <div className="mt-3 grid gap-2 rounded-xl border bg-white/80 p-3 text-sm text-slate-700 sm:grid-cols-3">
       {items.map((item) => (
-        <span
+        <div
           key={item.label}
-          className={`inline-flex min-h-8 items-center gap-1.5 rounded-full border px-3.5 py-1.5 ${
+          className={`rounded-lg border px-3 py-2 ${
             item.tone === "good"
               ? "border-emerald-200 bg-emerald-50 text-emerald-800"
               : item.tone === "warn"
@@ -628,9 +1535,9 @@ function SummaryChips({ items }: { items: Array<{ label: string; value: unknown;
                 : "border-slate-200 bg-slate-50 text-slate-700"
           }`}
         >
-          <span className="text-slate-500">{item.label}</span>
-          <strong className="font-bold tabular-nums">{displayMetric(item.value)}</strong>
-        </span>
+          <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500">{item.label}</div>
+          <div className="mt-0.5 text-lg font-bold tabular-nums">{displayMetric(item.value)}</div>
+        </div>
       ))}
     </div>
   )
@@ -644,24 +1551,45 @@ function NumberField({
   onChange,
   disabled,
   lockedReason,
+  widthClass = "max-w-48",
+  resetValue,
 }: {
   id: string
-  label: string
+  label?: string
   value?: number
   placeholder?: string
   onChange: (value: number | undefined) => void
   disabled?: boolean
   lockedReason?: string
+  widthClass?: string
+  resetValue?: number
 }) {
   const isLocked = Boolean(lockedReason)
+  const numericValue = typeof value === "number" && Number.isFinite(value) ? Math.trunc(value) : undefined
+  const resetTarget = typeof resetValue === "number" && Number.isFinite(resetValue) ? Math.trunc(resetValue) : undefined
+  const isDirty = !isLocked && resetTarget !== undefined && numericValue !== undefined && numericValue !== resetTarget
 
   return (
-    <div className="grid gap-1.5" title={lockedReason}>
+    <div className={`group grid w-full ${widthClass} gap-1.5`} title={lockedReason}>
       <div className="flex items-center justify-between gap-2">
         <Label htmlFor={id} className="text-xs font-medium text-slate-700">
           {label}
         </Label>
-        {isLocked && <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">Locked</span>}
+        <div className="flex items-center gap-2">
+          {isLocked && <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">Locked</span>}
+          {isDirty && (
+            <button
+              type="button"
+              className="flex h-5 w-5 items-center justify-center rounded-full text-[12px] font-medium text-slate-400 opacity-0 transition hover:bg-slate-100 hover:text-slate-700 group-hover:opacity-100 focus:opacity-100 focus-visible:opacity-100 disabled:cursor-not-allowed disabled:opacity-40"
+              onClick={() => onChange(resetTarget)}
+              disabled={disabled}
+              title={`Reset ${label ?? "value"} to ${resetTarget}`}
+              aria-label={`Reset ${label ?? "value"} to ${resetTarget}`}
+            >
+              ↺
+            </button>
+          )}
+        </div>
       </div>
       <Input
         id={id}
@@ -671,7 +1599,7 @@ function NumberField({
         onChange={(event) => onChange(parseNumberInput(event.target.value))}
         placeholder={placeholder}
         disabled={disabled || isLocked}
-        className={`h-8 text-sm tabular-nums ${isLocked ? "bg-slate-100 text-slate-500" : ""}`}
+        className={`h-8 text-center text-sm tabular-nums ${isLocked ? "bg-slate-100 text-slate-500" : ""}`}
       />
     </div>
   )
@@ -685,56 +1613,106 @@ function NumberStepperField({
   onChange,
   disabled,
   min = 0,
+  helperText,
+  max,
+  lockedReason,
+  resetValue,
 }: {
   id: string
-  label: string
+  label?: string
   value?: number
   placeholder?: string
   onChange: (value: number | undefined) => void
   disabled?: boolean
   min?: number
+  helperText?: string
+  max?: number
+  lockedReason?: string
+  resetValue?: number
 }) {
+  const safeMin = Math.max(0, Math.trunc(min))
+  const isLocked = Boolean(lockedReason)
+  const numericValue = typeof value === "number" && Number.isFinite(value) ? value : undefined
+  const safeMax = typeof max === "number" && Number.isFinite(max) ? Math.max(safeMin, Math.trunc(max)) : undefined
+  const resetTarget = typeof resetValue === "number" && Number.isFinite(resetValue)
+    ? Math.max(safeMin, Math.trunc(resetValue))
+    : safeMin
+  const isDirty = !isLocked && numericValue !== undefined && numericValue !== resetTarget
+
   const step = (delta: number) => {
-    const base = typeof value === "number" && Number.isFinite(value) ? value : delta > 0 ? min : min + 1
-    const next = Math.max(min, base + delta)
+    const base = numericValue ?? (delta > 0 ? safeMin : safeMin + 1)
+    const unclamped = Math.max(safeMin, base + delta)
+    const next = safeMax === undefined ? unclamped : Math.min(safeMax, unclamped)
     onChange(next)
   }
 
+  const handleInputChange = (raw: string) => {
+    const parsed = parseNumberInput(raw)
+    if (parsed === undefined) {
+      onChange(safeMin > 0 ? safeMin : undefined)
+      return
+    }
+
+    const unclamped = Math.max(safeMin, parsed)
+    onChange(safeMax === undefined ? unclamped : Math.min(safeMax, unclamped))
+  }
+
   return (
-    <div className="grid gap-1.5">
-      <Label htmlFor={id} className="text-xs font-medium text-slate-700">
-        {label}
-      </Label>
-      <div className="inline-flex h-9 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm focus-within:ring-2 focus-within:ring-amber-500/25">
-        <button
-          type="button"
-          className="flex w-9 items-center justify-center border-r border-slate-200 text-base font-semibold text-slate-500 transition hover:bg-amber-50 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-40"
-          onClick={() => step(-1)}
-          disabled={disabled}
-          aria-label={`Decrease ${label}`}
-        >
-          −
-        </button>
-        <Input
-          id={id}
-          type="text"
-          inputMode="numeric"
-          value={value ?? ""}
-          onChange={(event) => onChange(parseNumberInput(event.target.value))}
-          placeholder={placeholder ?? "Unset"}
-          disabled={disabled}
-          className="h-9 min-w-0 flex-1 rounded-none border-0 bg-transparent text-center text-sm font-medium tabular-nums shadow-none [appearance:textfield] focus-visible:ring-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-        />
-        <button
-          type="button"
-          className="flex w-9 items-center justify-center border-l border-slate-200 text-base font-semibold text-slate-500 transition hover:bg-amber-50 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-40"
-          onClick={() => step(1)}
-          disabled={disabled}
-          aria-label={`Increase ${label}`}
-        >
-          +
-        </button>
+    <div className="group grid w-full max-w-52 gap-1.5" title={lockedReason}>
+      <div className="flex items-center justify-between gap-2">
+        <Label htmlFor={id} className="text-xs font-medium text-slate-700">
+          {label}
+        </Label>
+        <div className="flex items-center gap-2">
+          {isLocked && <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">Locked</span>}
+          {isDirty && (
+            <button
+              type="button"
+              className="flex h-5 w-5 items-center justify-center rounded-full text-[12px] font-medium text-slate-400 opacity-0 transition hover:bg-slate-100 hover:text-slate-700 group-hover:opacity-100 focus:opacity-100 focus-visible:opacity-100 disabled:cursor-not-allowed disabled:opacity-40"
+              onClick={() => onChange(resetTarget)}
+              disabled={disabled}
+              title={`Reset ${label ?? "value"} to ${resetTarget}`}
+              aria-label={`Reset ${label ?? "value"} to ${resetTarget}`}
+            >
+              ↺
+            </button>
+          )}
+        </div>
       </div>
+      <div className="flex items-center gap-2">
+        <div className="inline-flex h-9 min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm focus-within:ring-2 focus-within:ring-amber-500/25">
+          <button
+            type="button"
+            className="flex w-9 items-center justify-center border-r border-slate-200 text-base font-semibold text-slate-500 transition hover:bg-amber-50 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-40"
+            onClick={() => step(-1)}
+            disabled={disabled || isLocked || (numericValue !== undefined ? numericValue <= safeMin : safeMin > 0)}
+            aria-label={`Decrease ${label}`}
+          >
+            −
+          </button>
+          <Input
+            id={id}
+            type="text"
+            inputMode="numeric"
+            value={value ?? ""}
+            onChange={(event) => handleInputChange(event.target.value)}
+            placeholder={placeholder ?? "Unset"}
+            disabled={disabled || isLocked}
+            className={`h-9 min-w-0 flex-1 rounded-none border-0 bg-transparent text-center text-sm font-medium tabular-nums shadow-none [appearance:textfield] placeholder:text-slate-400 placeholder:font-normal focus-visible:ring-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${isLocked ? "bg-slate-100 text-slate-500" : ""}`}
+          />
+          <button
+            type="button"
+            className="flex w-9 items-center justify-center border-l border-slate-200 text-base font-semibold text-slate-500 transition hover:bg-amber-50 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-40"
+            onClick={() => step(1)}
+            disabled={disabled || isLocked || (safeMax !== undefined && numericValue !== undefined && numericValue >= safeMax)}
+            aria-label={`Increase ${label}`}
+          >
+            +
+          </button>
+        </div>
+
+      </div>
+      {helperText && <p className="text-[11px] text-slate-500">{helperText}</p>}
     </div>
   )
 }
@@ -804,19 +1782,37 @@ function BooleanSelect({
   onChange: (value: boolean | undefined) => void
   disabled?: boolean
 }) {
+  const options: Array<{ label: string; value: boolean }> = [
+    { label: "Yes", value: true },
+    { label: "No", value: false },
+  ]
+
   return (
     <div className="grid gap-1.5">
       <Label className="text-xs font-medium text-slate-700">{label}</Label>
-      <Select value={value === true ? "yes" : value === false ? "no" : "unknown"} onValueChange={(next) => onChange(next === "unknown" ? undefined : next === "yes")} disabled={disabled}>
-        <SelectTrigger className="h-8">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="unknown">Unknown</SelectItem>
-          <SelectItem value="yes">Yes</SelectItem>
-          <SelectItem value="no">No</SelectItem>
-        </SelectContent>
-      </Select>
+      <div className="inline-flex h-9 w-fit justify-self-start overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        {options.map((option) => {
+          const active = value === option.value
+          return (
+            <button
+              key={option.label}
+              type="button"
+              className={`min-w-14 border-r border-slate-200 px-3 text-sm font-medium transition last:border-r-0 disabled:cursor-not-allowed disabled:opacity-50 ${
+                active
+                  ? option.value
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "bg-slate-100 text-slate-700"
+                  : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+              }`}
+              onClick={() => onChange(active ? undefined : option.value)}
+              disabled={disabled}
+              aria-pressed={active}
+            >
+              {option.label}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -827,33 +1823,62 @@ function CouncilSeatSelect({
   onChange,
   disabled,
 }: {
-  label: string
+  label?: string
   value?: number
   onChange: (value: number | undefined) => void
   disabled?: boolean
 }) {
+  return <NumberSegmentSelect label={label} value={value} onChange={onChange} disabled={disabled} options={[1, 2, 3, 4]} />
+}
+
+function NumberSegmentSelect({
+  label,
+  value,
+  onChange,
+  disabled,
+  options,
+  warning,
+}: {
+  label?: string
+  value?: number
+  onChange: (value: number | undefined) => void
+  disabled?: boolean
+  options: number[]
+  warning?: string
+}) {
   return (
     <div className="grid gap-1.5">
-      <Label className="text-xs font-medium text-slate-700">{label}</Label>
-      <Select
-        value={typeof value === "number" ? String(value) : "unknown"}
-        onValueChange={(next) => onChange(next === "unknown" ? undefined : Number(next))}
-        disabled={disabled}
-      >
-        <SelectTrigger className="h-9">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="unknown">Unknown</SelectItem>
-          <SelectItem value="1">1st</SelectItem>
-          <SelectItem value="2">2nd</SelectItem>
-          <SelectItem value="3">3rd</SelectItem>
-          <SelectItem value="4">4th</SelectItem>
-        </SelectContent>
-      </Select>
+      <div className="flex items-center justify-between gap-2">
+        {label && <Label className="text-xs font-medium text-slate-700">{label}</Label>}
+        {warning && <span className="text-[10px] font-medium uppercase tracking-wide text-amber-600">{warning}</span>}
+      </div>
+      <div className="inline-flex h-9 w-fit max-w-full justify-self-start overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
+        {options.map((option) => {
+          const active = value === option
+          return (
+            <button
+              key={option}
+              type="button"
+              className={`min-w-11 border-r border-slate-200 px-3 text-sm font-medium transition last:border-r-0 disabled:cursor-not-allowed disabled:opacity-50 ${
+                active
+                  ? warning
+                    ? "bg-amber-50 text-amber-700"
+                    : "bg-amber-50 text-amber-700"
+                  : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+              }`}
+              onClick={() => onChange(active ? undefined : option)}
+              disabled={disabled}
+              aria-pressed={active}
+            >
+              {option}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }
+
 
 export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, onCancel }: EditPlaythroughFormProps) => {
   const formatDateForInput = (dateString: string) => {
@@ -876,6 +1901,17 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
   const [archetypes, setArchetypes] = useState<any[]>([])
   const [leadersLoading, setLeadersLoading] = useState(true)
   const [expandedPlayerId, setExpandedPlayerId] = useState<string | null>(null)
+  const [showVpSourcesByPlayer, setShowVpSourcesByPlayer] = useState<Record<number, boolean>>({})
+  const [showStrengthSourcesByPlayer, setShowStrengthSourcesByPlayer] = useState<Record<number, boolean>>({})
+
+  const globalAcquisitionCounts = useMemo(() => {
+    return playerRanks.reduce<Record<string, number>>((acc, result) => {
+      for (const item of result.acquisitions ?? []) {
+        acc[item.itemKey] = (acc[item.itemKey] ?? 0) + acquisitionCount(item)
+      }
+      return acc
+    }, {})
+  }, [playerRanks])
 
   useEffect(() => {
     if (!playthrough?.results) return
@@ -942,10 +1978,12 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
         highCouncilSeatPosition: getNumber(result, "highCouncilSeatPosition", "high_council_seat_position"),
         hasSwordmaster: getBoolean(result, "hasSwordmaster", "has_swordmaster"),
         hasMakerHooks: getBoolean(result, "hasMakerHooks", "has_maker_hooks"),
+        acquisitions: getAcquisitionsFromResult(result),
         notes: getText(result, "notes"),
       }))
 
-    const derivedInitialRanks = deriveResultSet(initialRanks, { defaultBaseVp: initialRanks.length === 4 ? 1 : 0 }) as PlayerRankInput[]
+    const initialRanksWithStarters = initialRanks.map((result: PlayerRankInput) => withStarterDeckDefaults(result))
+    const derivedInitialRanks = deriveResultSet(initialRanksWithStarters, { defaultBaseVp: initialRanksWithStarters.length === 4 ? 1 : 0 }) as PlayerRankInput[]
     setPlayerRanks(derivedInitialRanks)
     setExpandedPlayerId((current) => current ?? derivedInitialRanks[0]?.id ?? null)
   }, [playthrough, existingPlayers])
@@ -1008,6 +2046,18 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
       updated = syncConflictVpForFinalConflictChange(previous, updated) as PlayerRankInput
     }
 
+    if (field === "vpSourcesSpiceMustFlow") {
+      updated.acquisitions = syncSpiceMustFlowAcquisitionFromVp(updated.acquisitions, value as number | undefined)
+    }
+
+    if (field === "vpSourcesLeaderAbilities") {
+      updated.acquisitions = syncNavigationCard08FromLeaderVp(updated.acquisitions, value as number | undefined)
+    }
+
+    if (field === "acquisitions") {
+      updated = syncAcquisitionSummaryFields(previous, updated) as PlayerRankInput
+    }
+
     updatedRanks[index] = updated
 
     setPlayerRanks(
@@ -1022,11 +2072,21 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
   const updateLeader = (index: number, leaderId: string | undefined) => {
     const leader = leaderId ? leaders.find((candidate) => candidate.id === leaderId) : undefined
     const updatedRanks = [...playerRanks]
-    updatedRanks[index] = {
+    let updated: PlayerRankInput = {
       ...updatedRanks[index],
       leaderId,
       leaderName: leader?.name,
     }
+
+    if (!isSteersmanLeader(updated)) {
+      updated.vpSourcesLeaderAbilities = undefined
+      updated.acquisitions = removeNavigationAcquisitions(updated.acquisitions)
+    }
+
+    updated.acquisitions = syncStarterDeckForLeader(updated.acquisitions, updated)
+    updated = syncAcquisitionSummaryFields(updatedRanks[index], updated) as PlayerRankInput
+
+    updatedRanks[index] = updated
 
     setPlayerRanks(deriveResultSet(updatedRanks, { defaultBaseVp: updatedRanks.length === 4 ? 1 : 0 }) as PlayerRankInput[])
     setError(null)
@@ -1060,6 +2120,18 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
       .map((player, currentIndex) => ({ ...player, rank: String(currentIndex + 1) }))
 
     setPlayerRanks(deriveResultSet(next, { defaultBaseVp: next.length === 4 ? 1 : 0 }) as PlayerRankInput[])
+    setError(null)
+  }
+
+  const movePlayerRank = (index: number, direction: -1 | 1) => {
+    const targetIndex = index + direction
+    if (targetIndex < 0 || targetIndex >= playerRanks.length) return
+
+    const next = [...playerRanks]
+    ;[next[index], next[targetIndex]] = [next[targetIndex], next[index]]
+    const ranked = next.map((player, currentIndex) => ({ ...player, rank: String(currentIndex + 1) }))
+
+    setPlayerRanks(deriveResultSet(ranked, { defaultBaseVp: ranked.length === 4 ? 1 : 0 }) as PlayerRankInput[])
     setError(null)
   }
 
@@ -1138,11 +2210,64 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
     />
   )
 
+  const renderStepper = (
+    index: number,
+    player: PlayerRankInput,
+    field: PlayerField,
+    label: string,
+    options?: { min?: number; max?: number; placeholder?: string; resetValue?: number },
+  ) => (
+    <NumberStepperField
+      id={`edit-${String(field)}-${index}`}
+      label={label}
+      value={player[field] as number | undefined}
+      placeholder={options?.placeholder}
+      min={options?.min}
+      max={options?.max}
+      onChange={(value) => updateField(index, field, value as any)}
+      disabled={submitting}
+      lockedReason={getNumericLockReason(player, String(field))}
+    />
+  )
+
+  const renderInfluence = (index: number, player: PlayerRankInput, field: PlayerField, label: string) => (
+    <NumberSegmentSelect
+      label={label}
+      value={player[field] as number | undefined}
+      options={[0, 1, 2, 3, 4, 5, 6]}
+      onChange={(value) => updateField(index, field, value as any)}
+      disabled={submitting}
+    />
+  )
+
   const renderBoolean = (index: number, player: PlayerRankInput, field: PlayerField, label: string) => (
     <BooleanSelect label={label} value={player[field] as boolean | undefined} onChange={(value) => updateField(index, field, value as any)} disabled={submitting} />
   )
 
   const renderAdvanced = (player: PlayerRankInput, index: number) => {
+    const acquisitions = player.acquisitions ?? []
+    const contractCompletedFloor = countAcquisitions(acquisitions, "contract", ["completed"])
+    const contractHeldFloor = countAcquisitions(acquisitions, "contract", ["held"])
+    const intriguePlayedFloor = countAcquisitions(acquisitions, "intrigue_card", ["played"])
+    const intrigueHeldFloor = countAcquisitions(acquisitions, "intrigue_card", ["held"])
+    const techTilesFloor = countAcquisitions(acquisitions, "tech_tile")
+    const commanderSkillsFloor = countAcquisitions(acquisitions, "sardaukar_skill")
+    const conflictCardsFloor = countAcquisitions(acquisitions, "conflict_card", ["won"])
+    const deckCardsTotal = countAcquisitionsForTypes(acquisitions, ["imperium_card", "reserve_card", "starter_card"])
+    const deckCardsTrashedFloor = countAcquisitionsForTypes(acquisitions, ["imperium_card", "reserve_card", "starter_card"], ["trashed"])
+    const navigationCardsFloor = countAcquisitions(acquisitions, "navigation_card", ["played"])
+    const showVpSources = Boolean(showVpSourcesByPlayer[index])
+    const showStrengthSources = Boolean(showStrengthSourcesByPlayer[index])
+    const isSteersman = isSteersmanLeader(player)
+    const battleIconBreakdown = calculateBattleIconVpForResult(player)
+    const battleIconBadges = battleIconSourceBadges(battleIconBreakdown)
+    const conflictRewardSourceVp = sumAcquisitionVp(acquisitions, ["conflict_card"])
+    const spiceMustFlowSourceVp = countSpiceMustFlowAcquisitions(acquisitions)
+    const intrigueSourceVp = sumSupportedIntrigueVp(player)
+    const techSourceVp = sumAcquisitionVp(acquisitions, ["tech_tile"])
+    const deckCardSourceVp = sumAcquisitionVp(acquisitions, ["imperium_card", "reserve_card", "starter_card"])
+    const leaderSourceVp = isSteersman ? sumAcquisitionVp(acquisitions, ["navigation_card"]) : 0
+
     return (
       <div className="mt-4 grid gap-4 rounded-xl bg-slate-50 p-4">
         <div className="flex items-center justify-between">
@@ -1152,40 +2277,27 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
           {hasAdvancedData(player) && <Badge variant="secondary">Has data</Badge>}
         </div>
 
-        <StatSection title="Outcome" icon={Trophy}>
-          <div className="grid gap-3 sm:grid-cols-3">
-            {renderNumber(index, player, "score", "Final VP")}
-            {renderNumber(index, player, "turnOrderPosition", "Turn order")}
-            <div className="grid gap-1.5">
-              <Label className="text-xs font-medium text-slate-700">Strategic archetype</Label>
-              <Select value={player.strategicArchetypeId || "none"} onValueChange={(value) => updateField(index, "strategicArchetypeId", normaliseSelectId(value))} disabled={submitting}>
-                <SelectTrigger className="h-8">
-                  <SelectValue placeholder="Select strategy" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No strategy</SelectItem>
-                  {archetypes.map((archetype) => (
-                    <SelectItem key={archetype.id} value={archetype.id}>
-                      {archetype.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+        <StatSection title="Outcome and setup" icon={Trophy}>
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,14rem)_minmax(0,18rem)_minmax(0,1fr)]">
+            <NumberField id={`score-${index}`} label="Final VP" value={player.score} onChange={(value) => updateField(index, "score", value)} disabled={submitting} widthClass="max-w-64" />
+            <ObjectiveSelect value={player.objectiveCard} onChange={(value) => updateField(index, "objectiveCard", value as any)} disabled={submitting} />
+            <NumberSegmentSelect
+              label="Turn order"
+              value={player.turnOrderPosition}
+              options={Array.from({ length: playerRanks.length }, (_, orderIndex) => orderIndex + 1)}
+              onChange={(value) => updateField(index, "turnOrderPosition", value as any)}
+              disabled={submitting}
+              warning={
+                player.turnOrderPosition !== undefined &&
+                playerRanks.some((other, otherIndex) => otherIndex !== index && other.turnOrderPosition === player.turnOrderPosition)
+                  ? "Duplicate"
+                  : undefined
+              }
+            />
           </div>
         </StatSection>
 
         <StatSection title="Scoring breakdown" icon={Flag}>
-          <div className="grid gap-3 sm:grid-cols-3">
-            {renderNumber(index, player, "vpSourcesBase", "Base VP")}
-            <NumberStepperField id={`vp-conflict-${index}`} label="Conflict VP" value={player.vpSourcesConflictCards} onChange={(value) => updateField(index, "vpSourcesConflictCards", value as any)} disabled={submitting} />
-            {renderNumber(index, player, "vpSourcesBattleIconMatches", "Battle icon VP")}
-            {renderNumber(index, player, "vpSourcesSpiceMustFlow", "Spice Must Flow VP")}
-            {renderNumber(index, player, "vpSourcesIntrigueCards", "Intrigue VP")}
-            {renderNumber(index, player, "vpSourcesTechTiles", "Tech tile VP")}
-            {renderNumber(index, player, "vpSourcesImperiumCards", "Imperium card VP")}
-            {renderNumber(index, player, "vpSourcesLeaderAbilities", "Leader ability VP")}
-          </div>
           <SummaryChips
             items={[
               { label: "Faction VP", value: calculateFactionVp(player) },
@@ -1193,141 +2305,444 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
               { label: "Unaccounted", value: typeof player.score === "number" ? player.score - calculateKnownVp(player) : undefined, tone: typeof player.score === "number" && player.score - calculateKnownVp(player) === 0 ? "good" : "warn" },
             ]}
           />
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+            <NumberField id={`edit-vp-base-${index}`} label="Base VP" value={playerRanks.length === 4 ? 1 : 0} onChange={() => {}} disabled lockedReason={playerRanks.length === 4 ? "4-player setup starts on 1" : "setup starts on 0 outside 4-player games"} />
+            <NumberStepperField id={`edit-vp-conflict-${index}`} label="Conflict reward VP" value={player.vpSourcesConflictCards} resetValue={conflictRewardSourceVp || undefined} onChange={(value) => updateField(index, "vpSourcesConflictCards", value as any)} disabled={submitting} />
+            <NumberStepperField
+              id={`edit-vp-battle-icons-${index}`}
+              label="Battle icon VP"
+              value={player.vpSourcesBattleIconMatches}
+              min={battleIconBreakdown.hasInputs ? battleIconBreakdown.battleIconVp : 0}
+              resetValue={battleIconBreakdown.hasInputs ? battleIconBreakdown.battleIconVp : undefined}
+              onChange={(value) => updateField(index, "vpSourcesBattleIconMatches", (battleIconBreakdown.hasInputs && value === undefined ? battleIconBreakdown.battleIconVp : value) as any)}
+              disabled={submitting}
+            />
+            <NumberStepperField id={`edit-smf-vp-${index}`} label="Spice Must Flow VP" value={player.vpSourcesSpiceMustFlow} resetValue={spiceMustFlowSourceVp || undefined} onChange={(value) => updateField(index, "vpSourcesSpiceMustFlow", value as any)} disabled={submitting} />
+            <NumberStepperField id={`edit-vp-intrigue-${index}`} label="Intrigue VP" value={player.vpSourcesIntrigueCards} resetValue={intrigueSourceVp || undefined} onChange={(value) => updateField(index, "vpSourcesIntrigueCards", value as any)} disabled={submitting} lockedReason={getNumericLockReason(player, "vpSourcesIntrigueCards")} />
+            <NumberStepperField id={`edit-vp-tech-${index}`} label="Tech tile VP" value={player.vpSourcesTechTiles} resetValue={techSourceVp || undefined} onChange={(value) => updateField(index, "vpSourcesTechTiles", value as any)} disabled={submitting} lockedReason={getNumericLockReason(player, "vpSourcesTechTiles")} />
+            <NumberStepperField id={`edit-vp-imperium-${index}`} label="Imperium card VP" value={player.vpSourcesImperiumCards} resetValue={deckCardSourceVp || undefined} onChange={(value) => updateField(index, "vpSourcesImperiumCards", value as any)} disabled={submitting} />
+            {isSteersman && (
+              <NumberStepperField id={`edit-vp-leader-${index}`} label="Leader ability VP" value={player.vpSourcesLeaderAbilities} resetValue={leaderSourceVp || undefined} onChange={(value) => updateField(index, "vpSourcesLeaderAbilities", value as any)} disabled={submitting} max={1} />
+            )}
+          </div>
+          <VpRail
+            result={player}
+            playerCount={playerRanks.length}
+            action={(
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => setShowVpSourcesByPlayer((current) => ({ ...current, [index]: !showVpSources }))}
+              >
+                {showVpSources ? "Hide VP sources" : "Show VP sources"}
+              </Button>
+            )}
+          />
+          {showVpSources && (
+            <div className="mt-3 grid gap-3">
+              <AcquisitionsEditor
+                title="Conflict cards"
+                placeholder="Search Conflict card..."
+                emptyText="No Conflict cards added yet."
+                allowedItemTypes={["conflict_card"]}
+                summaryCount={player.vpSourcesConflictCards}
+                unlistedLabel="conflict reward VP not itemised"
+                summaryMetric="vp"
+                vpSummaryLabel="reward VP"
+                extraSummaryBadges={battleIconBreakdown.battleIconVp > 0 ? [{
+                  label: `${battleIconBreakdown.battleIconVp} battle icon VP`,
+                  className: "rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 font-medium text-rose-700",
+                }] : []}
+                enableVpControls
+                defaultVpOnAdd
+                value={player.acquisitions}
+                onChange={(value) => updateField(index, "acquisitions", value as any)}
+                disabled={submitting}
+                globalItemCounts={globalAcquisitionCounts}
+                itemBadges={battleIconBadges.conflictBadges}
+                vpCapMultiplier={player.hasMakerHooks ? 2 : 1}
+              />
+              <AcquisitionsEditor
+                title="Deck cards"
+                placeholder="Search VP deck card..."
+                emptyText="No scoring deck cards added yet."
+                allowedItemTypes={["imperium_card", "reserve_card", "starter_card"]}
+                summaryCount={summaryTotal(player.vpSourcesImperiumCards, player.vpSourcesSpiceMustFlow)}
+                unlistedLabel="VP not itemised"
+                enableVpControls
+                vpOnly
+                defaultVpOnAdd
+                value={player.acquisitions}
+                onChange={(value) => updateField(index, "acquisitions", value as any)}
+                disabled={submitting}
+                globalItemCounts={globalAcquisitionCounts}
+              />
+              <AcquisitionsEditor
+                title="Intrigues"
+                placeholder="Search Intrigue..."
+                emptyText="No Intrigues added yet."
+                allowedItemTypes={["intrigue_card"]}
+                effectiveVpCounts={battleIconBreakdown.supportedIntrigueVpByItemKey}
+                summaryCount={player.vpSourcesIntrigueCards}
+                unlistedLabel="VP not itemised"
+                enableVpControls
+                vpOnly
+                defaultVpOnAdd
+                value={player.acquisitions}
+                onChange={(value) => updateField(index, "acquisitions", value as any)}
+                disabled={submitting}
+                globalItemCounts={globalAcquisitionCounts}
+                itemBadges={battleIconBadges.intrigueBadges}
+              />
+              <AcquisitionsEditor
+                title="Tech tiles"
+                placeholder="Search Tech tile..."
+                emptyText="No Tech tiles added yet."
+                allowedItemTypes={["tech_tile"]}
+                summaryCount={player.vpSourcesTechTiles}
+                unlistedLabel="VP not itemised"
+                enableVpControls
+                vpOnly
+                defaultVpOnAdd
+                value={player.acquisitions}
+                onChange={(value) => updateField(index, "acquisitions", value as any)}
+                disabled={submitting}
+                globalItemCounts={globalAcquisitionCounts}
+              />
+              {isSteersman && (
+                <AcquisitionsEditor
+                  title="Leader ability"
+                  placeholder="Search Navigation card..."
+                  emptyText="No scoring leader card added yet."
+                  allowedItemTypes={["navigation_card"]}
+                  summaryCount={player.vpSourcesLeaderAbilities}
+                  unlistedLabel="leader VP not itemised"
+                  enableVpControls
+                  vpOnly
+                  defaultVpOnAdd
+                  value={player.acquisitions}
+                  onChange={(value) => updateField(index, "acquisitions", value as any)}
+                  disabled={submitting}
+                  globalItemCounts={globalAcquisitionCounts}
+                />
+              )}
+            </div>
+          )}
+
         </StatSection>
 
-        <StatSection title="Economy" icon={Gem}>
-          <div className="grid gap-3 sm:grid-cols-3">
+
+        <StatSection title="Influence and alliances" icon={Landmark}>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <StatSubsection title="Emperor">
+              <div className="grid gap-3">
+                {renderInfluence(index, player, "influenceEmperor", "Influence")}
+                {renderBoolean(index, player, "hasAllianceEmperor", "Alliance")}
+              </div>
+            </StatSubsection>
+            <StatSubsection title="Guild">
+              <div className="grid gap-3">
+                {renderInfluence(index, player, "influenceSpacingGuild", "Influence")}
+                {renderBoolean(index, player, "hasAllianceSpacingGuild", "Alliance")}
+              </div>
+            </StatSubsection>
+            <StatSubsection title="Bene Gesserit">
+              <div className="grid gap-3">
+                {renderInfluence(index, player, "influenceBeneGesserit", "Influence")}
+                {renderBoolean(index, player, "hasAllianceBeneGesserit", "Alliance")}
+              </div>
+            </StatSubsection>
+            <StatSubsection title="Fremen">
+              <div className="grid gap-3">
+                {renderInfluence(index, player, "influenceFremen", "Influence")}
+                {renderBoolean(index, player, "hasAllianceFremen", "Alliance")}
+              </div>
+            </StatSubsection>
+          </div>
+        </StatSection>
+        <StatSection title="Economy" defaultOpen={false} icon={Gem}>
+          <div className="flex flex-wrap gap-4">
             {renderNumber(index, player, "endgameSpiceCount", "Spice")}
             {renderNumber(index, player, "endgameSolariCount", "Solari")}
             {renderNumber(index, player, "endgameWaterCount", "Water")}
           </div>
         </StatSection>
 
-        <StatSection title="Influence and alliances" icon={Landmark}>
-          <div className="grid gap-3 lg:grid-cols-4">
-            <StatSubsection title="Emperor">
-              <div className="grid gap-3">
-                {renderNumber(index, player, "influenceEmperor", "Influence")}
-                {renderBoolean(index, player, "hasAllianceEmperor", "Alliance")}
-              </div>
-            </StatSubsection>
-            <StatSubsection title="Guild">
-              <div className="grid gap-3">
-                {renderNumber(index, player, "influenceSpacingGuild", "Influence")}
-                {renderBoolean(index, player, "hasAllianceSpacingGuild", "Alliance")}
-              </div>
-            </StatSubsection>
-            <StatSubsection title="Bene Gesserit">
-              <div className="grid gap-3">
-                {renderNumber(index, player, "influenceBeneGesserit", "Influence")}
-                {renderBoolean(index, player, "hasAllianceBeneGesserit", "Alliance")}
-              </div>
-            </StatSubsection>
-            <StatSubsection title="Fremen">
-              <div className="grid gap-3">
-                {renderNumber(index, player, "influenceFremen", "Influence")}
-                {renderBoolean(index, player, "hasAllianceFremen", "Alliance")}
-              </div>
-            </StatSubsection>
-          </div>
-        </StatSection>
-
-        <StatSection title="Final conflict" icon={Swords}>
-          <div className="grid gap-3">
-            <StatSubsection title="Combat result">
-              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(16rem,1.25fr)]">
-                {renderNumber(index, player, "finalConflictStrength", "Final strength")}
-                <NumberField id={`final-conflict-place-${index}`} label="Place" value={calculateConflictPlace(playerRanks, index)} onChange={() => {}} disabled lockedReason="derived from final strengths" />
-                <NumberStepperField id={`vp-final-conflict-${index}`} label="Final Conflict VP" value={player.vpSourcesFinalConflict} onChange={(value) => updateField(index, "vpSourcesFinalConflict", value as any)} disabled={submitting} />
-              </div>
+        <StatSection title="Final conflict" defaultOpen={false} icon={Swords}>
+          <div className="grid gap-4">
+            <div>
               <SummaryChips
                 items={[
                   { label: "Known strength", value: calculateFinalConflictKnownStrength(player) },
+                  { label: "Final strength", value: player.finalConflictStrength },
                   { label: "Unaccounted", value: typeof player.finalConflictStrength === "number" ? player.finalConflictStrength - calculateFinalConflictKnownStrength(player) : undefined, tone: typeof player.finalConflictStrength === "number" && player.finalConflictStrength - calculateFinalConflictKnownStrength(player) === 0 ? "good" : "warn" },
                 ]}
               />
-            </StatSubsection>
-              <StatSubsection title="Deployed units">
-                <div className="grid gap-3 sm:grid-cols-3">
-                  {renderNumber(index, player, "finalConflictDeployedTroops", "Troops")}
-                  {renderNumber(index, player, "finalConflictDeployedCommanders", "Commanders")}
-                  {renderNumber(index, player, "finalConflictDeployedSandworms", "Sandworms")}
-                </div>
-              </StatSubsection>
-            <StatSubsection title="Garrison">
-              <div className="grid gap-3 sm:grid-cols-2">
-                {renderNumber(index, player, "finalConflictGarrisonTroops", "Troops")}
-                {renderNumber(index, player, "finalConflictGarrisonCommanders", "Commanders")}
+              <div className="mt-3 flex flex-wrap gap-4">
+                {renderNumber(index, player, "finalConflictStrength", "Final strength")}
+                <NumberField id={`final-conflict-place-${index}`} label="Place" value={calculateConflictPlace(playerRanks, index)} onChange={() => {}} disabled lockedReason="derived from final strengths" />
+                <NumberStepperField id={`vp-final-conflict-${index}`} label="Final conflict VP" value={player.vpSourcesFinalConflict} onChange={(value) => updateField(index, "vpSourcesFinalConflict", value as any)} disabled={submitting} max={4} lockedReason={getNumericLockReason(player, "vpSourcesFinalConflict")} />
               </div>
-            </StatSubsection>
-              <StatSubsection title="Bonuses">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {renderNumber(index, player, "finalConflictStrengthSourcesCommanderSkills", "Cmdr Skills")}
-                  {renderNumber(index, player, "finalConflictStrengthSourcesIntrigue", "Intrigue")}
-                  {renderNumber(index, player, "finalConflictStrengthSourcesImperium", "Imperium")}
-                  {renderNumber(index, player, "finalConflictStrengthSourcesTech", "Tech Tiles")}
-                </div>
-              </StatSubsection>
-            <div className="grid auto-rows-min items-start gap-3 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
             </div>
+            <LightSubsection title="Deployed units">
+              <div className="flex flex-wrap gap-4">
+                {renderStepper(index, player, "finalConflictDeployedTroops", "Troops")}
+                {renderStepper(index, player, "finalConflictDeployedCommanders", "Commanders")}
+                {renderStepper(index, player, "finalConflictDeployedSandworms", "Sandworms")}
+              </div>
+            </LightSubsection>
+            <LightSubsection title="Garrison">
+              <div className="flex flex-wrap gap-4">
+                {renderStepper(index, player, "finalConflictGarrisonTroops", "Troops")}
+                {renderStepper(index, player, "finalConflictGarrisonCommanders", "Commanders")}
+              </div>
+            </LightSubsection>
+            <LightSubsection
+              title="Bonuses"
+              action={(
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={() => setShowStrengthSourcesByPlayer((current) => ({ ...current, [index]: !showStrengthSources }))}
+                >
+                  {showStrengthSources ? "Hide strength sources" : "Show strength sources"}
+                </Button>
+              )}
+            >
+              <div className="flex flex-wrap gap-4">
+                {renderStepper(index, player, "finalConflictStrengthSourcesCommanderSkills", "Cmdr skills")}
+                {renderStepper(index, player, "finalConflictStrengthSourcesIntrigue", "Intrigue")}
+                {renderStepper(index, player, "finalConflictStrengthSourcesImperium", "Imperium")}
+                {renderStepper(index, player, "finalConflictStrengthSourcesTech", "Tech tiles")}
+              </div>
+              {showStrengthSources && (
+                <div className="mt-3 grid gap-3">
+                  <AcquisitionsEditor
+                    title="Commander skills"
+                    placeholder="Search Commander skill..."
+                    emptyText="No Commander skills added yet."
+                    allowedItemTypes={["sardaukar_skill"]}
+                    summaryCount={player.finalConflictStrengthSourcesCommanderSkills}
+                    unlistedLabel="strength not itemised"
+                    enableStrengthControls
+                    strengthOnly
+                    value={player.acquisitions}
+                    onChange={(value) => updateField(index, "acquisitions", value as any)}
+                    disabled={submitting || isZero(player.commanderSkillsCount)}
+                    globalItemCounts={globalAcquisitionCounts}
+                  />
+                  <AcquisitionsEditor
+                    title="Intrigues"
+                    placeholder="Search Combat Intrigue..."
+                    emptyText="No Intrigues added yet."
+                    allowedItemTypes={["intrigue_card"]}
+                    summaryCount={player.finalConflictStrengthSourcesIntrigue}
+                    unlistedLabel="strength not itemised"
+                    enableStrengthControls
+                    strengthOnly
+                    value={player.acquisitions}
+                    onChange={(value) => updateField(index, "acquisitions", value as any)}
+                    disabled={submitting || isZero(player.intrigueCardsPlayed)}
+                    globalItemCounts={globalAcquisitionCounts}
+                    itemBadges={battleIconBadges.intrigueBadges}
+                  />
+                  <AcquisitionsEditor
+                    title="Deck cards"
+                    placeholder="Search strength card..."
+                    emptyText="No deck cards added yet."
+                    allowedItemTypes={["imperium_card", "reserve_card", "starter_card"]}
+                    summaryCount={player.finalConflictStrengthSourcesImperium}
+                    unlistedLabel="strength not itemised"
+                    enableStrengthControls
+                    strengthOnly
+                    value={player.acquisitions}
+                    onChange={(value) => updateField(index, "acquisitions", value as any)}
+                    disabled={submitting}
+                    globalItemCounts={globalAcquisitionCounts}
+                  />
+                  <AcquisitionsEditor
+                    title="Tech tiles"
+                    placeholder="Search strength Tech tile..."
+                    emptyText="No Tech tiles added yet."
+                    allowedItemTypes={["tech_tile"]}
+                    summaryCount={player.finalConflictStrengthSourcesTech}
+                    unlistedLabel="strength not itemised"
+                    enableStrengthControls
+                    strengthOnly
+                    value={player.acquisitions}
+                    onChange={(value) => updateField(index, "acquisitions", value as any)}
+                    disabled={submitting || isZero(player.techTilesCount)}
+                    globalItemCounts={globalAcquisitionCounts}
+                  />
+                </div>
+              )}
+            </LightSubsection>
           </div>
         </StatSection>
 
-        <StatSection title="Board state and assets" icon={Shield}>
-          <div className="grid gap-4 lg:grid-cols-2">
-            <StatSubsection title="Presence">
-              <div className="grid gap-3 sm:grid-cols-2">
-                {renderNumber(index, player, "spiesOnBoardEndgame", "Spies")}
-                {renderNumber(index, player, "controlMarkerCount", "Control")}
+        <StatSection title="Board state and assets" defaultOpen={false} icon={Shield}>
+          <div className="grid gap-4">
+            <LightSubsection title="Presence">
+              <div className="flex flex-wrap gap-4">
+                {renderStepper(index, player, "spiesOnBoardEndgame", "Spies")}
+                {renderStepper(index, player, "controlMarkerCount", "Control")}
               </div>
-            </StatSubsection>
-            <StatSubsection title="Board upgrades" className="lg:col-span-2">
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            </LightSubsection>
+            <LightSubsection title="Board upgrades">
+              <div className="flex flex-wrap gap-4">
                 {renderBoolean(index, player, "hasHighCouncil", "High Council")}
                 <CouncilSeatSelect label="Council seat" value={player.highCouncilSeatPosition} onChange={(value) => updateField(index, "highCouncilSeatPosition", value as any)} disabled={submitting || player.hasHighCouncil === false} />
                 {renderBoolean(index, player, "hasSwordmaster", "Swordmaster")}
                 {renderBoolean(index, player, "hasMakerHooks", "Maker Hooks")}
               </div>
-            </StatSubsection>
-            <StatSubsection title="Contracts">
-              <div className="grid gap-3 sm:grid-cols-2">
-                {renderNumber(index, player, "contractsCompletedCount", "Completed")}
-                {renderNumber(index, player, "contractsHeldIncomplete", "Held")}
-              </div>
-            </StatSubsection>
-            <StatSubsection title="Tableau">
-              <div className="grid gap-3 sm:grid-cols-2">
-                {renderNumber(index, player, "techTilesCount", "Tech Tiles")}
-                {renderNumber(index, player, "commanderSkillsCount", "Cmdr Skills")}
-              </div>
-            </StatSubsection>
-          </div>
-        </StatSection>
-
-        <StatSection title="Cards" icon={ScrollText}>
-          <div className="grid gap-3 lg:grid-cols-3">
-            <StatSubsection title="Deck composition">
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-                {renderNumber(index, player, "finalDeckSize", "Size")}
-                {renderNumber(index, player, "cardsTrashedCount", "Trashed")}
-              </div>
-            </StatSubsection>
-            <StatSubsection title="Special cards">
+            </LightSubsection>
+            <LightSubsection title="Contracts">
               <div className="grid gap-3">
-                {renderNumber(index, player, "conflictCardsWonCount", "Conflicts won")}
-                <ObjectiveSelect value={player.objectiveCard} onChange={(value) => updateField(index, "objectiveCard", value as any)} disabled={submitting} />
+                <div className="flex flex-wrap gap-4">
+                  <NumberStepperField id={`edit-contracts-completed-${index}`} label="Completed" value={player.contractsCompletedCount} resetValue={contractCompletedFloor || undefined} onChange={(value) => updateField(index, "contractsCompletedCount", value as any)} disabled={submitting} />
+                  <NumberStepperField id={`edit-contracts-held-${index}`} label="Held" value={player.contractsHeldIncomplete} resetValue={contractHeldFloor || undefined} onChange={(value) => updateField(index, "contractsHeldIncomplete", value as any)} disabled={submitting} />
+                </div>
+                <AcquisitionsEditor
+                  title="Tracked contracts"
+                  placeholder="Search contract..."
+                  emptyText="No contracts added yet."
+                  allowedItemTypes={["contract"]}
+                  summaryCount={summaryTotal(player.contractsCompletedCount, player.contractsHeldIncomplete)}
+                  unlistedLabel="unlisted contract"
+                  value={player.acquisitions}
+                  onChange={(value) => updateField(index, "acquisitions", value as any)}
+                  disabled={submitting}
+                  globalItemCounts={globalAcquisitionCounts}
+                />
               </div>
-            </StatSubsection>
-            <StatSubsection title="Intrigue">
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-                {renderNumber(index, player, "intrigueCardsPlayed", "Played")}
-                {renderNumber(index, player, "intrigueCardsHeldEndgame", "Held")}
+            </LightSubsection>
+            <LightSubsection title="Tech tiles">
+              <div className="grid gap-3">
+                <NumberStepperField id={`edit-tech-tiles-count-${index}`} label="Count" value={player.techTilesCount} resetValue={techTilesFloor || undefined} onChange={(value) => updateField(index, "techTilesCount", value as any)} disabled={submitting} />
+                <AcquisitionsEditor
+                  title="Tracked tech tiles"
+                  placeholder="Search Tech tile..."
+                  emptyText="No Tech tiles added yet."
+                  allowedItemTypes={["tech_tile"]}
+                  summaryCount={player.techTilesCount}
+                  unlistedLabel="unlisted tile"
+                  enableVpControls
+                  value={player.acquisitions}
+                  onChange={(value) => updateField(index, "acquisitions", value as any)}
+                  disabled={submitting}
+                  globalItemCounts={globalAcquisitionCounts}
+                />
               </div>
-            </StatSubsection>
+            </LightSubsection>
+            <LightSubsection title="Commander skills">
+              <div className="grid gap-3">
+                <NumberStepperField id={`edit-commander-skills-count-${index}`} label="Count" value={player.commanderSkillsCount} resetValue={commanderSkillsFloor || undefined} onChange={(value) => updateField(index, "commanderSkillsCount", value as any)} disabled={submitting} />
+                <AcquisitionsEditor
+                  title="Tracked commander skills"
+                  placeholder="Search Commander skill..."
+                  emptyText="No Commander skills added yet."
+                  allowedItemTypes={["sardaukar_skill"]}
+                  summaryCount={player.commanderSkillsCount}
+                  unlistedLabel="unlisted skill"
+                  value={player.acquisitions}
+                  onChange={(value) => updateField(index, "acquisitions", value as any)}
+                  disabled={submitting}
+                  globalItemCounts={globalAcquisitionCounts}
+                />
+              </div>
+            </LightSubsection>
           </div>
         </StatSection>
 
-        <StatSection title="Notes" icon={NotebookText}>
+        <StatSection title="Cards and intrigues" defaultOpen={false} icon={ScrollText}>
+          <div className="grid gap-4">
+            <LightSubsection title="Deck composition">
+              <div className="grid gap-3">
+                <div className="flex flex-wrap gap-4">
+                  {renderNumber(index, player, "finalDeckSize", "Size")}
+                  <NumberStepperField id={`edit-cards-trashed-${index}`} label="Trashed" value={player.cardsTrashedCount} resetValue={deckCardsTrashedFloor || undefined} onChange={(value) => updateField(index, "cardsTrashedCount", value as any)} disabled={submitting} />
+                </div>
+                <AcquisitionsEditor
+                  title="Tracked deck cards"
+                  placeholder="Search deck or starter card..."
+                  emptyText="No deck cards added yet."
+                  allowedItemTypes={["imperium_card", "reserve_card", "starter_card"]}
+                  summaryCount={deckCardsTotal}
+                  unlistedLabel="unlisted card"
+                  enableVpControls
+                  value={player.acquisitions}
+                  onChange={(value) => updateField(index, "acquisitions", value as any)}
+                  disabled={submitting}
+                  globalItemCounts={globalAcquisitionCounts}
+                />
+              </div>
+            </LightSubsection>
+            <LightSubsection title="Conflicts">
+              <div className="grid gap-3">
+                <NumberStepperField id={`edit-conflicts-won-${index}`} label="Conflicts won" value={player.conflictCardsWonCount} resetValue={conflictCardsFloor || undefined} onChange={(value) => updateField(index, "conflictCardsWonCount", value as any)} disabled={submitting} />
+                <AcquisitionsEditor
+                  title="Conflict cards won"
+                  placeholder="Search Conflict card..."
+                  emptyText="No Conflict cards added yet."
+                  allowedItemTypes={["conflict_card"]}
+                  summaryCount={player.conflictCardsWonCount}
+                  unlistedLabel="unlisted conflict"
+                  value={player.acquisitions}
+                  onChange={(value) => updateField(index, "acquisitions", value as any)}
+                  disabled={submitting}
+                  globalItemCounts={globalAcquisitionCounts}
+                itemBadges={battleIconBadges.conflictBadges}
+                />
+              </div>
+            </LightSubsection>
+            <LightSubsection title="Intrigue">
+              <div className="grid gap-3">
+                <div className="flex flex-wrap gap-4">
+                  <NumberStepperField id={`edit-intrigue-played-${index}`} label="Played" value={player.intrigueCardsPlayed} resetValue={intriguePlayedFloor || undefined} onChange={(value) => updateField(index, "intrigueCardsPlayed", value as any)} disabled={submitting} />
+                  <NumberStepperField id={`edit-intrigue-held-${index}`} label="Held" value={player.intrigueCardsHeldEndgame} resetValue={intrigueHeldFloor || undefined} onChange={(value) => updateField(index, "intrigueCardsHeldEndgame", value as any)} disabled={submitting} />
+                </div>
+                <AcquisitionsEditor
+                  title="Tracked intrigues"
+                  placeholder="Search Intrigue card..."
+                  emptyText="No Intrigue cards added yet."
+                  allowedItemTypes={["intrigue_card"]}
+                  summaryCount={summaryTotal(player.intrigueCardsPlayed, player.intrigueCardsHeldEndgame)}
+                  unlistedLabel="unlisted intrigue"
+                  enableVpControls
+                  value={player.acquisitions}
+                  onChange={(value) => updateField(index, "acquisitions", value as any)}
+                  disabled={submitting}
+                  globalItemCounts={globalAcquisitionCounts}
+                itemBadges={battleIconBadges.intrigueBadges}
+                />
+              </div>
+            </LightSubsection>
+          </div>
+        </StatSection>
+
+        {isSteersman && (
+          <StatSection title="Navigation cards" defaultOpen={false} icon={Zap}>
+            <AcquisitionsEditor
+              title="Tracked navigation cards"
+              placeholder="Search Navigation card..."
+              emptyText="No Navigation cards added yet."
+              allowedItemTypes={["navigation_card"]}
+              summaryCount={navigationCardsFloor}
+              unlistedLabel="unlisted navigation"
+              enableVpControls
+              value={player.acquisitions}
+              onChange={(value) => updateField(index, "acquisitions", value as any)}
+              disabled={submitting}
+              globalItemCounts={globalAcquisitionCounts}
+            />
+          </StatSection>
+        )}
+
+        <StatSection title="Notes" defaultOpen={false} icon={NotebookText}>
           <TextField id={`notes-${index}`} label="Player notes" value={player.notes} placeholder="e.g. 1 influence from Panopticon" onChange={(value) => updateField(index, "notes", value)} disabled={submitting} />
         </StatSection>
       </div>
@@ -1387,8 +2802,32 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
                     </div>
 
                     <div>
-                      <Label htmlFor={`rank-${playerRank.id}`}>Final Rank</Label>
-                      <Input id={`rank-${playerRank.id}`} type="number" min={1} value={playerRank.rank} onChange={(event) => updateField(index, "rank", event.target.value)} disabled={submitting} />
+                      <Label>Final Rank</Label>
+                      <div className="mt-1 flex items-center gap-2">
+                        <div className="flex h-9 min-w-12 items-center justify-center rounded-lg border bg-amber-50 px-3 text-sm font-semibold text-amber-700 shadow-sm">
+                          {playerRank.rank || index + 1}
+                        </div>
+                        <div className="flex overflow-hidden rounded-lg border bg-white shadow-sm">
+                          <button
+                            type="button"
+                            className="flex h-9 w-9 items-center justify-center border-r text-slate-500 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                            onClick={() => movePlayerRank(index, -1)}
+                            disabled={submitting || index === 0}
+                            aria-label="Move player up in rankings"
+                          >
+                            <ChevronUp className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            className="flex h-9 w-9 items-center justify-center text-slate-500 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                            onClick={() => movePlayerRank(index, 1)}
+                            disabled={submitting || index === playerRanks.length - 1}
+                            aria-label="Move player down in rankings"
+                          >
+                            <ChevronDown className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
                     </div>
 
                     {playthrough?.game_type === "dune" && (
