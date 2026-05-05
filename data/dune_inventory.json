@@ -1,0 +1,4372 @@
+{
+  "meta": {
+    "generatedAt": "2026-01-28T07:40:37+00:00",
+    "deckCounts": {
+      "Conflict": 20,
+      "Contracts": 25,
+      "Imperium": 80,
+      "Intrigue": 69,
+      "Leader": 18,
+      "Navigation": 10,
+      "Reserve": 2,
+      "Sardaukar": 6,
+      "Starter": 7,
+      "Tech": 18
+    },
+    "boardSpaceCount": 22,
+    "mode": "grouped",
+    "optimised": true,
+    "filter": [
+      "Uprising",
+      "Bloodlines"
+    ]
+  },
+  "decks": {
+    "Conflict": [
+      {
+        "DeckId": "Conflict",
+        "DeckName": "Conflict Cards",
+        "Name": "Skirmish",
+        "Source": "Bloodlines",
+        "Compatibility": "All",
+        "Level": 1,
+        "BattleIcon": "Wild",
+        "Rewards": {
+          "1st": "Trash a card",
+          "2nd": "+1 Water, +1 Solari",
+          "3rd": "+2 Solari"
+        }
+      },
+      {
+        "DeckId": "Conflict",
+        "DeckName": "Conflict Cards",
+        "Name": "Storms in the South",
+        "Source": "Bloodlines",
+        "Compatibility": "Uprising",
+        "Level": 2,
+        "BattleIcon": "Wild",
+        "Rewards": {
+          "1st": "+1 Spy with Deep Cover, +2 Spice",
+          "2nd": "+2 Intrigue cards, +2 Solari",
+          "3rd": "+1 Intrigue, +2 Solari"
+        }
+      },
+      {
+        "DeckId": "Conflict",
+        "DeckName": "Conflict Cards",
+        "Name": "Skirmish",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Level": 1,
+        "BattleIcon": "Crysknife",
+        "Rewards": {
+          "1st": "+1 Influence with any Faction",
+          "2nd": "+1 Intrigue, +1 Spice",
+          "3rd": "+1 Spice"
+        }
+      },
+      {
+        "DeckId": "Conflict",
+        "DeckName": "Conflict Cards",
+        "Name": "Skirmish",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Level": 1,
+        "BattleIcon": "Ornithopter",
+        "Rewards": {
+          "1st": "+1 Intrigue, +1 Solari",
+          "2nd": "+1 Intrigue, +2 Solari",
+          "3rd": "+1 Intrigue"
+        }
+      },
+      {
+        "DeckId": "Conflict",
+        "DeckName": "Conflict Cards",
+        "Name": "Skirmish",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Level": 1,
+        "BattleIcon": "Desert Mouse",
+        "Rewards": {
+          "1st": "+2 Solari",
+          "2nd": "+3 Solari",
+          "3rd": "+2 Solari"
+        }
+      },
+      {
+        "DeckId": "Conflict",
+        "DeckName": "Conflict Cards",
+        "Name": "Secure Imperial Basin",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Level": 2,
+        "BattleIcon": "Desert Mouse",
+        "Rewards": {
+          "1st": "Control Imperial Basin, +2 Spice, +1 Troop",
+          "2nd": "+2 Water, +1 Troop",
+          "3rd": "+1 Water, +1 Troop"
+        },
+        "ShieldWallProtected": true
+      },
+      {
+        "DeckId": "Conflict",
+        "DeckName": "Conflict Cards",
+        "Name": "Siege of Arrakeen",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Level": 2,
+        "BattleIcon": "Ornithopter",
+        "Rewards": {
+          "1st": "+2 Solari, +2 Troops, Control Arrakeen",
+          "2nd": "+4 Solari, +1 Troop",
+          "3rd": "+3 Solari"
+        },
+        "ShieldWallProtected": true
+      },
+      {
+        "DeckId": "Conflict",
+        "DeckName": "Conflict Cards",
+        "Name": "Spice Freighters",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Level": 2,
+        "VPsAvailable": 1,
+        "BattleIcon": "Crysknife",
+        "Rewards": {
+          "1st": "+1 Influence with any Faction, 3 Spice -> +1 Victory Point",
+          "2nd": "+1 Water, +1 Spice, +1 Troop",
+          "3rd": "+1 Spice, +1 Troop"
+        }
+      },
+      {
+        "DeckId": "Conflict",
+        "DeckName": "Conflict Cards",
+        "Name": "Battle for Arrakeen",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Level": 3,
+        "VPsAvailable": 2,
+        "BattleIcon": "Crysknife",
+        "Rewards": {
+          "1st": "+1 Victory Point, Control Arrakeen, Recall 2 Spies -> +1 Victory Point",
+          "2nd": "+1 Intrigue, +1 Spice, +3 Solari",
+          "3rd": "+2 Solari, +2 Spice"
+        },
+        "ShieldWallProtected": true
+      },
+      {
+        "DeckId": "Conflict",
+        "DeckName": "Conflict Cards",
+        "Name": "Battle for Imperial Basin",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Level": 3,
+        "VPsAvailable": 2,
+        "BattleIcon": "Ornithopter",
+        "Rewards": {
+          "1st": "+1 Victory Point, Control Imperial Basin, 4 Spice -> +1 Victory Point",
+          "2nd": "+5 Spice",
+          "3rd": "+3 Spice"
+        },
+        "ShieldWallProtected": true
+      },
+      {
+        "DeckId": "Conflict",
+        "DeckName": "Conflict Cards",
+        "Name": "Battle for Spice Refinery",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Level": 3,
+        "VPsAvailable": 2,
+        "BattleIcon": "Desert Mouse",
+        "Rewards": {
+          "1st": "+1 Victory Point, Control Spice Refinery, 6 Solari -> +1 Victory Point",
+          "2nd": "+1 Intrigue, +3 Spice",
+          "3rd": "+3 Spice"
+        },
+        "ShieldWallProtected": true
+      },
+      {
+        "DeckId": "Conflict",
+        "DeckName": "Conflict Cards",
+        "Name": "CHOAM Security",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Level": 2,
+        "BattleIcon": "Crysknife",
+        "Rewards": {
+          "1st": "+1 Influence with Spacing Guild, +1 Contract, +1 Troop",
+          "2nd": "+1 Water, +2 Solari, +2 Troops",
+          "3rd": "+1 Intrigue, +1 Troop"
+        }
+      },
+      {
+        "DeckId": "Conflict",
+        "DeckName": "Conflict Cards",
+        "Name": "Propaganda",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Level": 3,
+        "BattleIcon": "Wild",
+        "Rewards": {
+          "1st": "Choose two: +1 Influence with Emperor, Spacing Guild, Bene Gesserit, or Fremen",
+          "2nd": "+1 Intrigue, +3 Spice",
+          "3rd": "+3 Spice"
+        }
+      },
+      {
+        "DeckId": "Conflict",
+        "DeckName": "Conflict Cards",
+        "Name": "Protect the Sietches",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Level": 2,
+        "BattleIcon": "Desert Mouse",
+        "Rewards": {
+          "1st": "+1 Influence with Fremen, +1 Water, +1 Troop",
+          "2nd": "+3 Spice, +1 Troop",
+          "3rd": "+2 Spice"
+        }
+      },
+      {
+        "DeckId": "Conflict",
+        "DeckName": "Conflict Cards",
+        "Name": "Seize Spice Refinery",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Level": 2,
+        "BattleIcon": "Crysknife",
+        "Rewards": {
+          "1st": "Control Spice Refinery, +1 Spy, +2 Spice",
+          "2nd": "+1 Intrigue, +1 Spice, +1 Troop",
+          "3rd": "+2 Spice"
+        },
+        "ShieldWallProtected": true
+      },
+      {
+        "DeckId": "Conflict",
+        "DeckName": "Conflict Cards",
+        "Name": "Shadow Contest",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Level": 2,
+        "BattleIcon": "Ornithopter",
+        "Rewards": {
+          "1st": "+1 Influence with Bene Gesserit, +1 Intrigue",
+          "2nd": "+1 Intrigue, +1 Spice, +1 Troop",
+          "3rd": "+1 Spice, +1 Troop"
+        }
+      },
+      {
+        "DeckId": "Conflict",
+        "DeckName": "Conflict Cards",
+        "Name": "Test of Loyalty",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Level": 2,
+        "BattleIcon": "Ornithopter",
+        "Rewards": {
+          "1st": "+1 Influence with Emperor, +1 Spy, +2 Solari",
+          "2nd": "+4 Solari, +1 Troop",
+          "3rd": "+3 Solari"
+        }
+      },
+      {
+        "DeckId": "Conflict",
+        "DeckName": "Conflict Cards",
+        "Name": "Trade Dispute",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Level": 2,
+        "BattleIcon": "Desert Mouse",
+        "Rewards": {
+          "1st": "+1 Contract, +1 Water, Trash a card",
+          "2nd": "+1 Water, +1 Spice, Trash a card",
+          "3rd": "+1 Water, +1 Troop"
+        }
+      }
+    ],
+    "Contracts": [
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "Acquire The Spice Must Flow",
+        "Source": "Uprising",
+        "Count": 1,
+        "Reward": "+1 Influence with Spacing Guild, +3 Solari"
+      },
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "Arakeen",
+        "Source": "Uprising",
+        "Count": 1,
+        "Reward": "+1 Troop, +1 Spy"
+      },
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "Arakeen",
+        "Source": "Uprising",
+        "Count": 1,
+        "Reward": "+1 Water"
+      },
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "Deliver Supplies",
+        "Source": "Uprising",
+        "Count": 1,
+        "Reward": "+3 Solari"
+      },
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "Espionage",
+        "Source": "Uprising",
+        "Count": 2,
+        "Reward": "+3 Solari"
+      },
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "Harvest 3+ Spice",
+        "Source": "Uprising",
+        "Count": 2,
+        "Reward": "+3 Solari"
+      },
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "Harvest 4+ Spice",
+        "Source": "Uprising",
+        "Count": 1,
+        "Reward": "+4 Solari"
+      },
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "Heighliner",
+        "Source": "Uprising",
+        "Count": 1,
+        "Reward": "+2 Water"
+      },
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "Heighliner",
+        "Source": "Uprising",
+        "Count": 1,
+        "Reward": "+2 Troops"
+      },
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "High Council",
+        "Source": "Uprising",
+        "Count": 1,
+        "Reward": "+3 Solari"
+      },
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "High Council",
+        "Source": "Uprising",
+        "Count": 1,
+        "Reward": "+1 Influence with Bene Gesserit"
+      },
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "Immediate",
+        "Source": "Uprising",
+        "Count": 1,
+        "Reward": "+2 Solari"
+      },
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "Research Station",
+        "Source": "Uprising",
+        "Count": 1,
+        "Reward": "+3 Solari"
+      },
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "Research Station",
+        "Source": "Uprising",
+        "Count": 1,
+        "Reward": "+2 Solari, +1 Spy"
+      },
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "Sardaukar",
+        "Source": "Uprising",
+        "Count": 1,
+        "Reward": "Draw 2 cards"
+      },
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "Sardaukar",
+        "Source": "Uprising",
+        "Count": 1,
+        "Reward": "Recall an Agent"
+      },
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "Spice Refinery",
+        "Source": "Uprising",
+        "Count": 1,
+        "Reward": "Draw 2 cards"
+      },
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "Spice Refinery",
+        "Source": "Uprising",
+        "Count": 1,
+        "Reward": "+1 Water"
+      },
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "Spice Refinery",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "Reward": "+2 Troops"
+      },
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "High Council",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "Reward": "Recall an Agent"
+      },
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "Secrets",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "Reward": "+2 Solari and Draw a card"
+      },
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "Earn Any Alliance",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "Reward": "+2 Solari and +2 Troops"
+      },
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "Deliver Supplies",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "Reward": "+1 Solari and +1 Spy with Deep Cover"
+      },
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "Immediate",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "Reward": "Trash 1 Intrigue card -> +1 Intrigue card and Draw a card (requires an Intrigue card)"
+      },
+      {
+        "DeckId": "Contracts",
+        "DeckName": "Contracts",
+        "Name": "Harvest",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "Reward": "+2 Solari and +1 Spy"
+      }
+    ],
+    "Imperium": [
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Arrakis Observer",
+        "Source": "Bloodlines",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 3
+        },
+        "AgentAbility": "Discard a card -> +1 Spy with Deep Cover. If you discarded a Spacing Guild card: +2 Spice.",
+        "BoardAccess": {
+          "Purple": true,
+          "Yellow": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Ability": "Recall a Spy -> +3 Swords."
+        },
+        "Affiliation": {
+          "Guild": true
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Bombast",
+        "Source": "Bloodlines",
+        "Compatibility": "All",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 1
+        },
+        "BoardAccess": {
+          "Green": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Ability": "If you have 6+ Persuasion: +3 Solari and trash this card."
+        },
+        "Affiliation": {
+          "Emperor": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "CHOAM Demands",
+        "Source": "Bloodlines",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 6
+        },
+        "AgentAbility": "Complete one of your contracts.",
+        "BoardAccess": {
+          "Green": true,
+          "Purple": true,
+          "Yellow": true
+        },
+        "Reveal": {
+          "Ability": "If you have completed 4+ Contracts: Trash this card -> +1 Influence with every Faction."
+        },
+        "Affiliation": {
+          "Guild": true
+        },
+        "Tags": {
+          "Contracts": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Command Center",
+        "Source": "Bloodlines",
+        "Compatibility": "All",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 3
+        },
+        "AgentAbility": "If you have 2+ Influence with the Emperor: +1 Troop.",
+        "BoardAccess": {
+          "Purple": true,
+          "Emperor": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Ability": "Retreat 2 Troops -> +2 Persuasion."
+        },
+        "Affiliation": {
+          "Emperor": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Corrupt Bureaucrat",
+        "Source": "Bloodlines",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 4
+        },
+        "PassiveAbility": "When this card is discarded: +3 Solari.",
+        "AgentAbility": "If you recalled a Spy this turn: +1 Contract.",
+        "BoardAccess": {
+          "Green": true,
+          "Guild": true,
+          "Spy": true
+        },
+        "Reveal": {
+          "Persuasion": 2
+        },
+        "Affiliation": {
+          "Guild": true
+        },
+        "Tags": {
+          "Spies": true,
+          "Contracts": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Delivery Logistics",
+        "Source": "Bloodlines",
+        "Compatibility": "Uprising",
+        "Count": 2,
+        "TragicJonsonHouseBlend": 2,
+        "Cost": {
+          "Persuasion": 2
+        },
+        "AgentAbility": "This has the Agent icons shown on all your incomplete contracts.",
+        "Reveal": {
+          "Ability": "+1 Persuasion OR +1 Contract."
+        },
+        "Affiliation": {
+          "Guild": true
+        },
+        "Tags": {
+          "Contracts": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Disruption Tactics",
+        "Source": "Bloodlines",
+        "Compatibility": "All",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 2
+        },
+        "AgentAbility": "Force an enemy troop to retreat.",
+        "BoardAccess": {
+          "Yellow": true,
+          "Fremen": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Ability": "Trash this card -> Deploy troops."
+        },
+        "Affiliation": {
+          "Fremen": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Eliminate Allies",
+        "Source": "Bloodlines",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 2
+        },
+        "PassiveAbility": "When this card is trashed: +2 Troops.",
+        "AgentAbility": "Trash a card.",
+        "BoardAccess": {
+          "Spy": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Swords": 1
+        },
+        "Affiliation": {
+          "Emperor": true
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Elite Forces",
+        "Source": "Bloodlines",
+        "Compatibility": "All",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 3
+        },
+        "AgentAbility": "You may trash a card from your hand. If you trash an Emperor card: +1 Intrigue, +1 Troop, Deploy troops.",
+        "BoardAccess": {
+          "Emperor": true,
+          "Guild": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Swords": 1
+        },
+        "Affiliation": {
+          "Emperor": true,
+          "Guild": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Engineered Miracle",
+        "Source": "Bloodlines",
+        "Compatibility": "All",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 3
+        },
+        "AgentAbility": "Discard a card -> +1 Water",
+        "BoardAccess": {
+          "Yellow": true,
+          "Fremen": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Ability": "If you have 6+ Persuasion: Trash this card -> Acquire a card from the Imperium Row."
+        },
+        "Affiliation": {
+          "BeneGesserit": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Fremen War Name",
+        "Source": "Bloodlines",
+        "Compatibility": "All",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 4
+        },
+        "AgentAbility": "If you gained 2+ Spice this turn: +1 Troop and Draw a card.",
+        "BoardAccess": {
+          "Yellow": true,
+          "Fremen": true
+        },
+        "Reveal": {
+          "Persuasion": 2,
+          "Ability": "Fremen Bond: +2 Swords"
+        },
+        "Affiliation": {
+          "Fremen": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Holy War",
+        "Source": "Bloodlines",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 5
+        },
+        "AgentAbility": "Each opponent loses one troop. Each opponent spying on the board space where you sent an Agent this turn must move that Spy.",
+        "BoardAccess": {
+          "Green": true,
+          "Emperor": true,
+          "Guild": true,
+          "BeneGesserit": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Ability": "+1 Troop AND Fremen Bond: Deploy troops."
+        },
+        "Affiliation": {
+          "Fremen": true
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "I Believe",
+        "Source": "Bloodlines",
+        "Compatibility": "All",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 3
+        },
+        "AgentAbility": "Discard a card -> Draw a card",
+        "BoardAccess": {
+          "Purple": true,
+          "Fremen": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Ability": "If you have 6+ Persuasion: +2 Troops."
+        },
+        "Affiliation": {
+          "Fremen": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Imperial Throneship",
+        "Source": "Bloodlines",
+        "Compatibility": "All",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 7
+        },
+        "AcquisitionBonus": "+1 Influence with the Emperor",
+        "AgentAbility": "+1 Intrigue",
+        "BoardAccess": {
+          "Green": true,
+          "Purple": true,
+          "Yellow": true,
+          "Emperor": true,
+          "Guild": true,
+          "BeneGesserit": true
+        },
+        "Reveal": {
+          "Persuasion": 2,
+          "Ability": "If you have 4+ garrisoned units: +1 Persuasion and +3 Solari."
+        },
+        "Affiliation": {
+          "Emperor": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Intelligence Training",
+        "Source": "Bloodlines",
+        "Compatibility": "Uprising",
+        "Count": 2,
+        "TragicJonsonHouseBlend": 2,
+        "Cost": {
+          "Persuasion": 3
+        },
+        "AcquisitionBonus": "+1 Spy",
+        "BoardAccess": {
+          "Green": true,
+          "Purple": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Swords": 1,
+          "Ability": "If you have 6+ Persuasion: +1 Spy"
+        },
+        "Affiliation": {
+          "Emperor": true
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Ixian Ambassador",
+        "Source": "Bloodlines",
+        "Compatibility": "Uprising",
+        "Count": 2,
+        "TragicJonsonHouseBlend": 2,
+        "Cost": {
+          "Persuasion": 4
+        },
+        "AgentAbility": "+1 Spice",
+        "BoardAccess": {
+          "Green": true
+        },
+        "Reveal": {
+          "Persuasion": 1
+        },
+        "Tags": {
+          "Tech": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Litany Against Fear",
+        "Source": "Bloodlines",
+        "Compatibility": "All",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 3
+        },
+        "PassiveAbility": "At the start of your turn: Put this card into play -> Draw a card and pass your turn.",
+        "Reveal": {
+          "Persuasion": 2
+        },
+        "Affiliation": {
+          "BeneGesserit": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Mercantile Affairs",
+        "Source": "Bloodlines",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 5
+        },
+        "AcquisitionBonus": "+1 Contract",
+        "AgentAbility": "If you completed a contract this turn: +1 Intrigue card",
+        "BoardAccess": {
+          "Purple": true,
+          "Yellow": true,
+          "BeneGesserit": true,
+          "Spy": true
+        },
+        "Reveal": {
+          "Persuasion": 2
+        },
+        "Affiliation": {
+          "BeneGesserit": true
+        },
+        "Tags": {
+          "Spies": true,
+          "Contracts": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Pointing the Way",
+        "Source": "Bloodlines",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 6
+        },
+        "AgentAbility": "If you have 1+ Sandworms in the Conflict: +1 Intrigue card.",
+        "BoardAccess": {
+          "Purple": true,
+          "Yellow": true,
+          "Fremen": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Swords": 2,
+          "Ability": "If you have 6+ Persuasion: +1 Influence with any Faction."
+        },
+        "Affiliation": {
+          "Fremen": true
+        },
+        "Tags": {
+          "Sandworms": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Possible Futures",
+        "Source": "Bloodlines",
+        "Compatibility": "All",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 8
+        },
+        "AcquisitionBonus": "+1 Water",
+        "AgentAbility": "+1 Influence with any Faction OR +2 Troops. If you have another Bene Gesserit card in play, get both.",
+        "BoardAccess": {
+          "Green": true,
+          "Purple": true,
+          "Yellow": true
+        },
+        "Reveal": {
+          "Persuasion": 2,
+          "Ability": "+1 Water"
+        },
+        "Affiliation": {
+          "BeneGesserit": true,
+          "Fremen": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Quash Rebellion",
+        "Source": "Bloodlines",
+        "Compatibility": "Bloodlines",
+        "Count": 2,
+        "TragicJonsonHouseBlend": 2,
+        "Cost": {
+          "Persuasion": 5
+        },
+        "AgentAbility": "+2 Solari",
+        "BoardAccess": {
+          "Green": true,
+          "Emperor": true,
+          "Guild": true
+        },
+        "Reveal": {
+          "Swords": 2,
+          "Ability": "If you have 1+ Sardaukar Commanders in the Conflict: +2 Persuasion."
+        },
+        "Affiliation": {
+          "Emperor": true
+        },
+        "Tags": {
+          "Sardaukar": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Sandwalk",
+        "Source": "Bloodlines",
+        "Compatibility": "All",
+        "Count": 2,
+        "TragicJonsonHouseBlend": 2,
+        "Cost": {
+          "Persuasion": 1
+        },
+        "AgentAbility": "If you gained 2+ Spice this turn: Draw a card.",
+        "BoardAccess": {
+          "Yellow": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Swords": 1,
+          "Ability": "Fremen Bond: +1 Persuasion."
+        },
+        "Affiliation": {
+          "Fremen": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Sardaukar Standard",
+        "Source": "Bloodlines",
+        "Compatibility": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 4
+        },
+        "PassiveAbility": "When this card is trashed, acquire and recruit the Sardaukar Commander in the bank.",
+        "BoardAccess": {
+          "Purple": true,
+          "Emperor": true
+        },
+        "Reveal": {
+          "Persuasion": 2,
+          "Ability": "+1 Troop"
+        },
+        "Affiliation": {
+          "Emperor": true
+        },
+        "Tags": {
+          "Sardaukar": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Shrouded Counsel",
+        "Source": "Bloodlines",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 4
+        },
+        "AgentAbility": "+1 Intrigue card",
+        "BoardAccess": {
+          "Spy": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Ability": "If you have 6+ Persuasion: Trash a card."
+        },
+        "Affiliation": {
+          "BeneGesserit": true
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Southern Faith",
+        "Source": "Bloodlines",
+        "Compatibility": "All",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 5
+        },
+        "AgentAbility": "Draw a card OR If you have another Bene Gesserit card in play: +1 Influence with the Bene Gesserit.",
+        "BoardAccess": {
+          "Purple": true,
+          "Fremen": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Swords": 2,
+          "Ability": "If you have 6+ Persuasion: +2 Spice."
+        },
+        "Affiliation": {
+          "BeneGesserit": true,
+          "Fremen": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Urgent Shigawire",
+        "Source": "Bloodlines",
+        "Compatibility": "All",
+        "Count": 2,
+        "TragicJonsonHouseBlend": 2,
+        "Cost": {
+          "Persuasion": 2
+        },
+        "AgentAbility": "The next Bene Gesserit card you play this round has all Agent icons and, added to its Agent box: Draw a card.",
+        "BoardAccess": {
+          "Purple": true,
+          "BeneGesserit": true
+        },
+        "Reveal": {
+          "Persuasion": 1
+        },
+        "Affiliation": {
+          "BeneGesserit": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Bene Gesserit Operative",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Count": 2,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 2,
+        "Cost": {
+          "Persuasion": 3
+        },
+        "AgentAbility": "+1 Spy",
+        "BoardAccess": {
+          "BeneGesserit": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Ability": "If you have two or more Spies on the board: +2 Persuasion"
+        },
+        "Affiliation": {
+          "BeneGesserit": true
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Branching Path",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 3
+        },
+        "AgentAbility": "With 2 Influence with Bene Gesserit: Trash an intrigue card -> +1 Intrigue card, +2 Spice",
+        "BoardAccess": {
+          "Purple": true,
+          "BeneGesserit": true
+        },
+        "Reveal": {
+          "Persuasion": 2
+        },
+        "Affiliation": {
+          "BeneGesserit": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Calculus of Power",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Count": 2,
+        "MerakonHouseBlend": 2,
+        "TragicJonsonHouseBlend": 2,
+        "Cost": {
+          "Persuasion": 3
+        },
+        "AgentAbility": "Trash a card",
+        "BoardAccess": {
+          "Purple": true,
+          "Spy": true
+        },
+        "Reveal": {
+          "Persuasion": 2,
+          "Ability": "Trash another Emperor card you have in play -> +3 Swords"
+        },
+        "Affiliation": {
+          "Emperor": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Captured Mentat",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 5
+        },
+        "AgentAbility": "Discard 1 card -> +1 Intrigue card, Draw 1 card",
+        "BoardAccess": {
+          "Green": true,
+          "Yellow": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Ability": "-1 Influence with a Faction -> +1 Influence with a Faction"
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Cargo Runner",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 3
+        },
+        "AgentAbility": "If you have completed 2+ contracts: Draw a card. If you have completed 4+ contracts: Draw a card.",
+        "BoardAccess": {
+          "Green": true,
+          "Purple": true,
+          "Yellow": true
+        },
+        "Reveal": {
+          "Persuasion": 1
+        },
+        "Affiliation": {
+          "Guild": true
+        },
+        "Tags": {
+          "Contracts": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Chani, Clever Tactician",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 5
+        },
+        "AgentAbility": "If you have three or more units in the conflict: +1 Intrigue card",
+        "BoardAccess": {
+          "Purple": true,
+          "Yellow": true,
+          "Fremen": true
+        },
+        "Reveal": {
+          "Ability": "Retreat two of your troops -> 4 Swords\nFremen Bond: +2 Persuasion"
+        },
+        "Affiliation": {
+          "Fremen": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Corrinth City",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 6
+        },
+        "AgentAbility": "Discard two cards and pay 5 Solari -> +1 Victory Point",
+        "BoardAccess": {
+          "Green": true,
+          "Emperor": true
+        },
+        "Reveal": {
+          "Ability": "5 Solari OR\nPay 5 Solari -> Take your seat on the High Council (if you haven't already)"
+        },
+        "Affiliation": {
+          "Emperor": true
+        },
+        "VPsAvailable": 9
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Covert Operation",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 3
+        },
+        "AgentAbility": "Each opponent discards a card.",
+        "BoardAccess": {
+          "Spy": true
+        },
+        "Reveal": {
+          "Ability": "+2 Spies"
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Dangerous Rhetoric",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 3
+        },
+        "AgentAbility": "1 Influence with a Faction. Trash this card.",
+        "BoardAccess": {
+          "Green": true,
+          "Spy": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Swords": 1
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Delivery Agreement",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 5
+        },
+        "AgentAbility": "Discard a card -> +1 Contract",
+        "BoardAccess": {
+          "Purple": true
+        },
+        "Reveal": {
+          "Ability": "+1 Spice OR If you have completed 4+ Contracts: Trash this card -> +1 Victory Point"
+        },
+        "Affiliation": {
+          "Guild": true
+        },
+        "Tags": {
+          "Contracts": true
+        },
+        "VPsAvailable": 1
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Desert Power",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 6
+        },
+        "AgentAbility": "If you sent an Agent to a Maker board space this turn: +2 Spice",
+        "BoardAccess": {
+          "Yellow": true
+        },
+        "Reveal": {
+          "Ability": "+2 Persuasion OR With Maker Hooks: 1 Water -> 1 Sandworm"
+        },
+        "Affiliation": {
+          "Fremen": true
+        },
+        "Tags": {
+          "Sandworms": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Desert Survival",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 2,
+        "MerakonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 2
+        },
+        "AgentAbility": "Trash a card",
+        "BoardAccess": {
+          "Yellow": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Swords": 1
+        },
+        "Affiliation": {
+          "Fremen": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Double Agent",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Count": 2,
+        "MerakonHouseBlend": 2,
+        "TragicJonsonHouseBlend": 2,
+        "Cost": {
+          "Persuasion": 3
+        },
+        "AgentAbility": "+1 Spy on the board space your sent an Agent to this turn. You may place this Spy ont he same observation post as another player's Spy.",
+        "BoardAccess": {
+          "Green": true,
+          "Purple": true,
+          "Yellow": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Swords": 1
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Ecological Testing Station",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 3
+        },
+        "AgentAbility": "2 Water -> Draw 2 cards",
+        "BoardAccess": {
+          "Purple": true,
+          "Fremen": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Ability": "Fremen Bond: +1 Water"
+        },
+        "Affiliation": {
+          "Fremen": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Fedaykin Stilltent",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 2
+        },
+        "AgentAbility": "If you sent an Agent to a Maker board space  this turn: Get 1 Troop.",
+        "BoardAccess": {
+          "Yellow": true
+        },
+        "Reveal": {
+          "Ability": "+1 Water"
+        },
+        "Affiliation": {
+          "Fremen": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Guild Envoy",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 3
+        },
+        "AgentAbility": "Discard a card. If you discarded a Spacing Guild card: Draw 2 cards",
+        "BoardAccess": {
+          "Emperor": true,
+          "Guild": true,
+          "BeneGesserit": true,
+          "Fremen": true
+        },
+        "Reveal": {
+          "Persuasion": 1
+        },
+        "Affiliation": {
+          "Guild": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Guild Spy",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 3
+        },
+        "AcquisitionBonus": "+1 Spy",
+        "AgentAbility": "Discard 1 card -> Draw 1 card. If you discarded a Spacing Guild card: +1 Intrigue card",
+        "BoardAccess": {
+          "Spy": true
+        },
+        "Reveal": {
+          "Persuasion": 2,
+          "Ability": "If you acquire The Spice Must Flow this turn, gain one influence with each Faction you are spying on."
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Hidden Missive",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 2
+        },
+        "AgentAbility": "2 Influence with Bene Gesserit: Get 1 Troop & Draw a card.",
+        "BoardAccess": {
+          "Green": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Swords": 1
+        },
+        "Affiliation": {
+          "BeneGesserit": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Imperial Spymaster",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 2
+        },
+        "AgentAbility": "If you recalled a Spy this turn: Get 1 Intrigue Card.",
+        "BoardAccess": {
+          "Emperor": true,
+          "Spy": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Swords": 1
+        },
+        "Affiliation": {
+          "Emperor": true
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "In High Places",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 5
+        },
+        "AcquisitionBonus": "+1 Spy",
+        "AgentAbility": "If you have another Bene Gesserit card in play: Draw 1 card, +1 Spy",
+        "BoardAccess": {
+          "Emperor": true,
+          "BeneGesserit": true
+        },
+        "Reveal": {
+          "Persuasion": 2,
+          "Ability": "Recall 2 Spies -> +3 Persuasion"
+        },
+        "Affiliation": {
+          "Emperor": true,
+          "BeneGesserit": true
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Interstellar Trade",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 7
+        },
+        "AcquisitionBonus": "+1 Contract",
+        "AgentAbility": "+1 Influence with a Faction",
+        "BoardAccess": {
+          "Green": true,
+          "Purple": true,
+          "Yellow": true
+        },
+        "Reveal": {
+          "Ability": "+1 Persuasion for each Contract you have completed."
+        },
+        "Affiliation": {
+          "Guild": true
+        },
+        "Tags": {
+          "Contracts": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Junction Headquarters",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 6
+        },
+        "AgentAbility": "With 2 Spacing Guild Influence: \nTrash an intrigue card and spend two spice to gain one Victory Point",
+        "BoardAccess": {
+          "Green": true,
+          "Purple": true,
+          "Yellow": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Ability": "+1 Water, +1 Troop"
+        },
+        "Affiliation": {
+          "Guild": true
+        },
+        "VPsAvailable": 9
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Leadership",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 5
+        },
+        "AgentAbility": "For each Sandworm you have in the conflict: Draw a card.",
+        "BoardAccess": {
+          "Yellow": true,
+          "Fremen": true
+        },
+        "Reveal": {
+          "Persuasion": 2,
+          "Swords": 1,
+          "Ability": "+1 Sword for each revealed card that provides one or more Swords this turn."
+        },
+        "Affiliation": {
+          "Fremen": true
+        },
+        "Tags": {
+          "Sandworms": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Long Live the Fighters",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 7
+        },
+        "AgentAbility": "If your deck has three or more cards, look at the top three cards. Draw one, discard one, and trash one.",
+        "BoardAccess": {
+          "Purple": true,
+          "Fremen": true
+        },
+        "Reveal": {
+          "Persuasion": 2,
+          "Swords": 3
+        },
+        "Affiliation": {
+          "Fremen": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Maker Keeper",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 2,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 2,
+        "Cost": {
+          "Persuasion": 2
+        },
+        "AgentAbility": "2 Influence with Bene Gesserit: +1 Water\n2 Influence with Fremen: +1 Spice",
+        "BoardAccess": {
+          "Purple": true
+        },
+        "Reveal": {
+          "Persuasion": 2
+        },
+        "Affiliation": {
+          "BeneGesserit": true,
+          "Fremen": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Maula Pistol",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 2,
+        "MerakonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 3
+        },
+        "AgentAbility": "Draw a card",
+        "BoardAccess": {
+          "Purple": true,
+          "Yellow": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Swords": 1
+        },
+        "Affiliation": {
+          "Fremen": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Northern Watermaster",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 3
+        },
+        "AgentAbility": "+1 Water",
+        "BoardAccess": {
+          "Purple": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Ability": "Fremen Bond: +2 Spice"
+        },
+        "Affiliation": {
+          "Fremen": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Overthrow",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 8
+        },
+        "AcquisitionBonus": "+1 Intrigue card",
+        "AgentAbility": "Gain two influence instead of one.",
+        "BoardAccess": {
+          "Emperor": true,
+          "Guild": true,
+          "BeneGesserit": true,
+          "Fremen": true
+        },
+        "Reveal": {
+          "Persuasion": 2,
+          "Swords": 2,
+          "Ability": "+1 Troop"
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Paracompass",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 4
+        },
+        "AgentAbility": "+2 Solari",
+        "BoardAccess": {
+          "Purple": true
+        },
+        "Reveal": {
+          "Ability": "If you have a seat on the High Council: +2 Persuasion\nIf you ALSO have a Swordmaster: +1 Persuasion"
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Price is Not Object",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 6
+        },
+        "AcquisitionBonus": "+2 Solari",
+        "AgentAbility": "You may acquire a card to your hand using Solari instead of Persuasion.",
+        "BoardAccess": {
+          "Emperor": true,
+          "BeneGesserit": true
+        },
+        "Reveal": {
+          "Persuasion": 2,
+          "Ability": "+2 Solari"
+        },
+        "Affiliation": {
+          "Emperor": true,
+          "BeneGesserit": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Priority Contracts",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 6
+        },
+        "AgentAbility": "+1 Contract",
+        "BoardAccess": {
+          "Green": true,
+          "Yellow": true
+        },
+        "Reveal": {
+          "Ability": "+2 Spice OR If you have completed 4+ Contracts: Trash this card -> +1 Victory Point"
+        },
+        "Affiliation": {
+          "Guild": true
+        },
+        "Tags": {
+          "Contracts": true
+        },
+        "VPsAvailable": 1
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Public Spectacle",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Count": 2,
+        "MerakonHouseBlend": 2,
+        "TragicJonsonHouseBlend": 2,
+        "Cost": {
+          "Persuasion": 4
+        },
+        "AgentAbility": "If you recalled a Spy this turn: +1 Influence with a Faction",
+        "BoardAccess": {
+          "Spy": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Ability": "+1 Spy"
+        },
+        "Affiliation": {
+          "Emperor": true
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Rebel Supplier",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Count": 2,
+        "MerakonHouseBlend": 2,
+        "TragicJonsonHouseBlend": 2,
+        "Cost": {
+          "Persuasion": 3
+        },
+        "AgentAbility": "If you recalled a Spy this turn: +2 Troops",
+        "BoardAccess": {
+          "Purple": true
+        },
+        "Reveal": {
+          "Swords": 1,
+          "Ability": "+1 Spice"
+        },
+        "Affiliation": {
+          "Fremen": true
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Reliable Informant",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 2
+        },
+        "AgentAbility": "Deploy a Spy on Emperor/Bene Gesserit/Fremen Observation Post",
+        "Reveal": {
+          "Persuasion": 1,
+          "Ability": "+1 Solari"
+        },
+        "Affiliation": {
+          "Guild": true
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Sardaukar Coordination",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 2,
+        "MerakonHouseBlend": 2,
+        "TragicJonsonHouseBlend": 2,
+        "Cost": {
+          "Persuasion": 4
+        },
+        "AgentAbility": "You may deploy any troops you recruit this turn to the conflict.",
+        "BoardAccess": {
+          "Green": true,
+          "Emperor": true
+        },
+        "Reveal": {
+          "Swords": 1,
+          "Ability": "+1 Sword for each Emperor card you revealed (including this one)."
+        },
+        "Affiliation": {
+          "Emperor": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Sardaukar Soldier",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 1
+        },
+        "AgentAbility": "When this card is trashed: Get 1 Intrigue Card",
+        "BoardAccess": {
+          "Purple": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Swords": 1
+        },
+        "Affiliation": {
+          "Emperor": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Shishakli",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 4
+        },
+        "AgentAbility": "Trash a card -> Draw a card",
+        "BoardAccess": {
+          "Purple": true,
+          "Yellow": true
+        },
+        "Reveal": {
+          "Swords": 2,
+          "Ability": "Fremen Bond: +1 Fremen Influence"
+        },
+        "Affiliation": {
+          "Fremen": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Smuggler's Harvester",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 2,
+        "MerakonHouseBlend": 2,
+        "Cost": {
+          "Persuasion": 1
+        },
+        "AgentAbility": "If you sent an Agent to a Maker board space  this turn: Get 1 Spice",
+        "BoardAccess": {
+          "Yellow": true
+        },
+        "Reveal": {
+          "Persuasion": 1
+        },
+        "Affiliation": {
+          "Guild": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Smuggler's Haven",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 4
+        },
+        "AgentAbility": "4 Spice -> 1 Victory Point",
+        "BoardAccess": {
+          "Yellow": true,
+          "Guild": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Ability": "If you are occupying a Maker board space: +2 Spice"
+        },
+        "Affiliation": {
+          "Guild": true
+        },
+        "VPsAvailable": 1
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Southern Elders",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 4
+        },
+        "AgentAbility": "If you have another Bene Gesserit card in play: +2 Troops",
+        "BoardAccess": {
+          "BeneGesserit": true,
+          "Fremen": true
+        },
+        "Reveal": {
+          "Ability": "+1 Water\nFremen Bond: +2 Persuasion"
+        },
+        "Affiliation": {
+          "BeneGesserit": true,
+          "Fremen": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Space-Time Folding",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 1
+        },
+        "AgentAbility": "Discard a card -> Draw a card.\nIf you discarded a Spacing Guild card: Draw a card.",
+        "BoardAccess": {
+          "Guild": true
+        },
+        "Reveal": {
+          "Persuasion": 1
+        },
+        "Affiliation": {
+          "Guild": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Spacing Guild's Favor",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 2,
+        "MerakonHouseBlend": 2,
+        "Cost": {
+          "Persuasion": 5
+        },
+        "PassiveAbility": "When this card is discarded: +2 Spice",
+        "AgentAbility": "Draw 1 card",
+        "Reveal": {
+          "Persuasion": 2,
+          "Ability": "Spend 3 Spice to gain 1 influence with any faction."
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Spy Network",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 2
+        },
+        "AcquisitionBonus": "+1 Spy",
+        "Reveal": {
+          "Persuasion": 2,
+          "Swords": 1,
+          "Ability": "If you have two or more Spies on the board: Recall a Spy -> Get an Intrigue card."
+        },
+        "Affiliation": {
+          "Emperor": true,
+          "Guild": true
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Steersman",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 8
+        },
+        "AcquisitionBonus": "+1 Influence with Spacing Guild",
+        "AgentAbility": "Draw a Card, Recall an Agent",
+        "BoardAccess": {
+          "Green": true,
+          "Purple": true,
+          "Yellow": true,
+          "Guild": true
+        },
+        "Reveal": {
+          "Persuasion": 2,
+          "Ability": "+2 Spice"
+        },
+        "Affiliation": {
+          "Guild": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Stilgar, The Devoted",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 6
+        },
+        "AgentAbility": "+2 Troops",
+        "BoardAccess": {
+          "Purple": true,
+          "Yellow": true,
+          "Fremen": true
+        },
+        "Reveal": {
+          "Persuasion": 2,
+          "Ability": "+2 Persuasion for each Fremen card you have in play (including this one)."
+        },
+        "Affiliation": {
+          "Fremen": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Strike Fleet",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 5
+        },
+        "AcquisitionBonus": "+1 Spy",
+        "AgentAbility": "If you recalled a Spy this turn: +3 Troops",
+        "BoardAccess": {
+          "Spy": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Swords": 3
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Subversive Advisor",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 5
+        },
+        "AcquisitionBonus": "+1 Spy",
+        "AgentAbility": "If you sent an Agent to a Faction board space this turn, gain two Influence instead of one and trash this card.",
+        "BoardAccess": {
+          "Spy": true
+        },
+        "Reveal": {
+          "Persuasion": 1
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Treacherous Maneuver",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 5
+        },
+        "AgentAbility": "Trash this card and an Emperor card from your hand -> Gain two Influence instead of one.",
+        "BoardAccess": {
+          "Emperor": true,
+          "Guild": true,
+          "BeneGesserit": true,
+          "Fremen": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Ability": "+1 Intrigue card"
+        },
+        "Affiliation": {
+          "Emperor": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Tread in Darkness",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 2,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 2,
+        "Cost": {
+          "Persuasion": 4
+        },
+        "AgentAbility": "If you have another Bene Gesserit card in play: Trash a card, Draw a card",
+        "BoardAccess": {
+          "Green": true,
+          "Purple": true,
+          "Yellow": true
+        },
+        "Reveal": {
+          "Persuasion": 2,
+          "Swords": 1
+        },
+        "Affiliation": {
+          "BeneGesserit": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Truthtrance",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 2,
+        "MerakonHouseBlend": 2,
+        "Cost": {
+          "Persuasion": 4
+        },
+        "BoardAccess": {
+          "Emperor": true,
+          "Guild": true,
+          "BeneGesserit": true,
+          "Fremen": true
+        },
+        "Reveal": {
+          "Persuasion": 1
+        },
+        "Affiliation": {
+          "BeneGesserit": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Undercover Asset",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 2
+        },
+        "AgentAbility": "Ignore Influence requirements on board spaces when sending an Agent this turn.",
+        "BoardAccess": {
+          "Green": true,
+          "Purple": true,
+          "Yellow": true,
+          "Spy": true
+        },
+        "Reveal": {
+          "Ability": "+1 Spy or +2 Daggers"
+        },
+        "Affiliation": {
+          "Emperor": true,
+          "Guild": true
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Unswerving Loyalty",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 2,
+        "MerakonHouseBlend": 2,
+        "TragicJonsonHouseBlend": 2,
+        "Cost": {
+          "Persuasion": 1
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Ability": "+1 Troop\nFremen Bond: You may deploy or retreat one of your troops."
+        },
+        "Affiliation": {
+          "Fremen": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Weirding Woman",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "Count": 2,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 2,
+        "Cost": {
+          "Persuasion": 1
+        },
+        "AgentAbility": "If you have another Bene Gesserit card in play, return this card from play to your hand.",
+        "BoardAccess": {
+          "Purple": true,
+          "Yellow": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Swords": 1
+        },
+        "Affiliation": {
+          "BeneGesserit": true
+        }
+      },
+      {
+        "DeckId": "Imperium",
+        "DeckName": "Imperium Deck",
+        "Name": "Wheels within Wheels",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Cost": {
+          "Persuasion": 2
+        },
+        "AgentAbility": "With 2 Influence with Emperor: +2 Solari\nWith 2 Influence with Spacing Guild: +1 Spice",
+        "BoardAccess": {
+          "Spy": true
+        },
+        "Reveal": {
+          "Persuasion": 1,
+          "Ability": "+1 Spy"
+        },
+        "Affiliation": {
+          "Emperor": true,
+          "Guild": true
+        },
+        "Tags": {
+          "Spies": true
+        }
+      }
+    ],
+    "Intrigue": [
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Adaptive Tactics",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "Spend 1 Spice -> +1 Troop and Combat space."
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Ambitious",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Twisted": true,
+        "Effects": {
+          "Plot": "Lose three of your troops -> Gain one Influence with a Faction where an oponent has more Influence than you."
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Backed by CHOAM",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "Lose 1 Influence -> +4 Solari",
+          "Combat": "If you have completed 2+ Contracts, +4 Swords"
+        },
+        "Tags": {
+          "Contracts": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Battlefield Research",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "VPsAvailable": 1,
+        "Effects": {
+          "Combat": "Retreat 1+ troops -> Buy Tech at a 1 Spice discount",
+          "Endgame": "If you have three or more Tech tiles: +1 Victory Point"
+        },
+        "Tags": {
+          "Tech": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Buy Access",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "Pay 5 Solari -> +1 Influence in 2 Factions of your choice"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Calculating",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Twisted": true,
+        "Effects": {
+          "Plot": "For each type of unit you have in the Conflict: +1 Solari"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Call to Arms",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "During your Reveal turn this round, whenever you acquire a card: +1 Troop"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Change Allegiences",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "Lose 1 Influence -> +1 Influence; Pay 3 Spice -> +1 Influence"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "CHOAM Profits",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "VPsAvailable": 1,
+        "Effects": {
+          "Endgame": "If you have completed 4+ Contracts: +1 Victory Point"
+        },
+        "Tags": {
+          "Contracts": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Coercive Negotiation",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "When you deploy three or more units to the Conflict in a single turn: Reveal three contracts from the bank. Take one and trash the other two."
+        },
+        "Tags": {
+          "Contracts": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Contingency Plan",
+        "Source": "Uprising",
+        "Count": 3,
+        "MerakonHouseBlend": 3,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "+2 Solari",
+          "Combat": "+3 Swords"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Controlled",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Twisted": true,
+        "Effects": {
+          "Plot": "Look at the top card of your deck. You may put it back, discard it, or spend 1 Solari to draw it.",
+          "Combat": "+1 Sword"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Councilor's Ambition",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "If you have a seat on the High Council: +2 Water"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Crysknife",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "VPsAvailable": 1,
+        "Effects": {
+          "Plot": "+1 Spice",
+          "Endgame": "Flip one of your face-up Crysknife or ? Conflict cards -> +1 Victory Point"
+        },
+        "Tags": {
+          "BattleIcons": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Cunning",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "Draw a card OR pay 1 Spice -> Draw a card and Trash a card"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Depart for Arrakis",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "Pay 2 Spice -> +3 Troops; If you have 3 Influence with the Spacing Guild, Draw a card"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Desert Mouse",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "VPsAvailable": 1,
+        "Effects": {
+          "Plot": "+1 Spice",
+          "Endgame": "Flip one of your face-up Desert Mouse or ? Conflict cards -> +1 Victory Point"
+        },
+        "Tags": {
+          "BattleIcons": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Desert Support",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Combat": "Spend 1 Water -> +5 Swords."
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Detonation",
+        "Source": "Uprising",
+        "Count": 2,
+        "MerakonHouseBlend": 2,
+        "TragicJonsonHouseBlend": 2,
+        "Effects": {
+          "Plot": "Blow the Shield Wall OR Deploy up to 4 Troops from you garrison to the Conflict"
+        },
+        "Tags": {
+          "Sandworms": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Devious",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Twisted": true,
+        "Effects": {
+          "Plot": "Trash a card from your hand OR Deploy up to 2 troops from your garrison to the Conflict."
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Devour",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Combat": "+2 Swords; If you have 1+ Sandworm in the Conflict: +2 Swords and Trash a card"
+        },
+        "Tags": {
+          "Sandworms": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Discerning",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Twisted": true,
+        "Effects": {
+          "Plot": "Discard a card to Draw a card OR If you have an alliance: Draw a card."
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Distraction",
+        "Source": "Uprising",
+        "Count": 2,
+        "MerakonHouseBlend": 2,
+        "TragicJonsonHouseBlend": 2,
+        "Effects": {
+          "Plot": "When you deploy 3+ units to the Conflict in a single turn: +1 Spy. You may place this Spy on the same observation post as another player's Spy."
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Emperor's Invitation",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "Draw a card OR The card you play this turn has the Emperor icon."
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "False Orders",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "Each opponent spying on the board space where you sent an Agent this turn must move that Spy. Then you place a Spy on that Space."
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Find Weakness",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Combat": "+2 Swords; Recall 1 Spy -> +3 Swords"
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Go to Ground",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Combat": "Retreat 1 or 2 of your Troops -> +1 Spy"
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Grasp Arrakis",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "VPsAvailable": 1,
+        "Effects": {
+          "Combat": "+3 Swords",
+          "Endgame": "Flip two of your face-up Conflict-cards -> +1 Victory Point."
+        },
+        "Tags": {
+          "BattleIcons": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Honor Guard",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "+1 Troop. Recruiting a Sardaukar Commander (including when you acquire one) costs you 1 Solari less this turn."
+        },
+        "Tags": {
+          "Sardaukar": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Imperium Politics",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "Pay 1 Solari -> +1 Influence with Emperor or Spacing Guild"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Impress",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Combat": "+2 Swords and Acquire a card that costs 3 Persuasion or less"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Insider Information",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "Recall a Spy -> Trash a card and Draw a card OR Ignore Influence requirements on board spaces when sending an Agent this turn."
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Insidious",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Twisted": true,
+        "Effects": {
+          "Plot": "Give an opponent an Intrigue card from your hand -> +1 Spice. If you gave them a non-Twisted Intrigue card: +1 Spice."
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Inspire Awe",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "Acquire a card that costs 3 Persuasion or less; if you have one or more Sandworms in the Conflict, put that card in your hand"
+        },
+        "Tags": {
+          "Sandworms": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Intelligence Report",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "Draw a card; If you have 2+ Spies on the board: Draw a card"
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Leverage",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "If you gained Spice this turn: +1 Contract and +1 Solari"
+        },
+        "Tags": {
+          "Contracts": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Manipulate",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "Remove and replace a card in the Imperium Row; during your Reveal turn this round, you may acquire the removed card for 1 less Persuasion"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Market Opportunity",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "Pay 2 Solari -> +5 Solari OR pay 5 Solari -> +5 Spice"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Mercenaries",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "Pay 3 Solari -> +1 Intrigue card and +2 Troops"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Opportunism",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "VPsAvailable": 1,
+        "Effects": {
+          "Plot": "Lose 1 Influence with 2 Factions of your choice and pay 2 Solari -> +1 Victory Point"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Ornithopter",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "VPsAvailable": 1,
+        "Effects": {
+          "Plot": "+1 Spice",
+          "Endgame": "Flip one of your face-up Ornithopter or ? Conflict cards -> +1 Victory Point"
+        },
+        "Tags": {
+          "BattleIcons": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Questionable Methods",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Combat": "+1 Sword; Lose 1 Influence -> +4 Swords"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Rapid Engineering",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "Discard a card -> Buy Tech at a 1 Spice discount OR If you have 3+ Tech tiles, gain an Influence point with two different Factions."
+        },
+        "Tags": {
+          "Tech": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Reach Agreement",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Combat": "Retreat 1 or 2 of your Troops -> +1 Contract"
+        },
+        "Tags": {
+          "Contracts": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Resourceful",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Twisted": true,
+        "Effects": {
+          "Plot": "The card you play this turn has the following icons: Green, Purple, Yellow."
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Return the Favor",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Combat": "+1 Sword. For each Faction where you have 2+ Influence: +1 Sword."
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Ripples in the Sand",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Combat": "+3 Swords. If you have 1+ Sandworm in the Conflict: +1 Intrigue card."
+        },
+        "Tags": {
+          "Sandworms": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Sacred Pools",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "VPsAvailable": 1,
+        "Effects": {
+          "Plot": "Discard a card -> +1 Water",
+          "Endgame": "If you have 3+ Water: +1 Victory Point."
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Sadistic",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Twisted": true,
+        "Effects": {
+          "Plot": "Lose one of your troops -> Draw a card."
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Secure Spice Trade",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "VPsAvailable": 1,
+        "Effects": {
+          "Endgame": "If you have at least two The Spice Must Flow, +1 Victory Point and +2 Spice"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Seize Production",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "+2 Solari OR If you have 1+ Sardaukar Commanders in the Conflict: +2 Spice"
+        },
+        "Tags": {
+          "Sardaukar": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Shaddam's Favor",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "+1 Troop, and if you have 3 Influence with the Emperor: +3 Solari"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Shadow Alliance",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "VPsAvailable": 1,
+        "Effects": {
+          "Endgame": "If you have 4+ Influence on a Faction track where an opponent has the Alliance: +1 Victory Point"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Shrewd",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Twisted": true,
+        "Effects": {
+          "Combat": "Lose one of your troops in the Conflict -> +1 Spice."
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Sietch Ritual",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "Discard a card -> +1 Influence with Bene Gesserit or Fremen"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Sinister",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Twisted": true,
+        "Effects": {
+          "Combat": "Lose two of your troops -> +1 Intrigue card and +1 Solari."
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Sleeper Unit",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "Pay 1 Solari -> +1 Spy OR Recall a Spy -> +2 Troops"
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Special Mission",
+        "Source": "Uprising",
+        "Count": 2,
+        "MerakonHouseBlend": 2,
+        "TragicJonsonHouseBlend": 2,
+        "Effects": {
+          "Plot": "Place 1 Spy on a Purple space OR Recall one Spy -> Blow the Shield Wall and +2 Spice"
+        },
+        "Tags": {
+          "Spies": true,
+          "Sandworms": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Spice is Power",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Combat": "Retreat 3 of your Troops -> +3 Spice OR Pay 3 Spice -> +6 Swords"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Spring the Trap",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Combat": "Recall 2 Spies -> +7 Swords"
+        },
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Strategic Stockpiling",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "VPsAvailable": 2,
+        "Effects": {
+          "Plot": "Pay 5 Spice -> +1 Victory Point; If you have 3 Influence with the Fremen, pay 3 Water -> +1 Victory Point"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Tactical Option",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Combat": "+2 Swords OR Retreat any number of your Troops"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Tenuous Bond",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "Lose 1 Influence with any Faction -> Gain 1 Influence with any Faction.",
+          "Combat": "Trash a card from your discard pile that costs 1+ Persuasion -> +4 Swords."
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "The Strong Survive",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Combat": "+3 Swords OR Retreat one of your troops -> Trash a card."
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Unexpected Allies",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "Pay 2 Water -> Blow the Shield Wall and +1 Sandworm"
+        },
+        "Tags": {
+          "Sandworms": true
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Unnatural",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Twisted": true,
+        "Effects": {
+          "Plot": "Trash an Intrigue card -> +1 Intrigue card. If you trashed a non-Twisted Intrigue card: +1 Troop"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Weirding Combat",
+        "Source": "Uprising",
+        "Count": 1,
+        "MerakonHouseBlend": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Combat": "+3 Swords; if 3 Influence with Bene Gesserit, +2 Swords"
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Withdrawal Agreement",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Effects": {
+          "Plot": "Retreat 3 of your troops -> +1 Influence with any Faction."
+        }
+      },
+      {
+        "DeckId": "Intrigue",
+        "DeckName": "Intrigue Deck",
+        "Name": "Withdrawn",
+        "Source": "Bloodlines",
+        "Count": 1,
+        "TragicJonsonHouseBlend": 1,
+        "Twisted": true,
+        "Effects": {
+          "Plot": "At the start of yoru turn: Pass your turn."
+        }
+      }
+    ],
+    "Leader": [
+      {
+        "DeckId": "Leader",
+        "DeckName": "Leaders",
+        "Name": "Muad'Dib",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "House": "Atreides",
+        "LeaderAbility": "Unpredictable Foe: Reveal Turn: If you have one or more sandworms in the Conflict: +1 Intrigue",
+        "SignetRingAbility": "Lead the Way: +1 Draw",
+        "Complexity": 1
+      },
+      {
+        "DeckId": "Leader",
+        "DeckName": "Leaders",
+        "Name": "Gurney Halleck",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "House": "Atreides",
+        "LeaderAbility": "Always Smiling: If you have 6 or more strength in the Conflict (10 in a six-player game): +1 Persuasion",
+        "SignetRingAbility": "Warmaster: +1 Troop",
+        "Complexity": 1
+      },
+      {
+        "DeckId": "Leader",
+        "DeckName": "Leaders",
+        "Name": "Lady Jessica",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "House": "Atreides",
+        "LeaderAbility": "Other Memories: When you send an Agent to a Bene Gesserit board space, you may return all your memories to your supply, drawing a card for each one. Then flip this Leader over.",
+        "SignetRingAbility": "Spice Agony: Trade 1 Spice for 1 Intrigue card and move a troop from your supply to the Bene Gesserit area of the board. It is now a memory.",
+        "Complexity": 2
+      },
+      {
+        "DeckId": "Leader",
+        "DeckName": "Leaders",
+        "Name": "Shaddam Corrino IV",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "House": "Corrino",
+        "LeaderAbility": "Sardaukar Commander: Set aside both Sardaukar contracts. Only you can acquire them during the game.",
+        "SignetRingAbility": "Emperor of the Known Universe: Units can't be deployed to the Conflict this turn. +1 Solari and +1 Troop OR trade 3 Solari for +1 Influence",
+        "Complexity": 2
+      },
+      {
+        "DeckId": "Leader",
+        "DeckName": "Leaders",
+        "Name": "Princess Irulan",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "House": "Corrino",
+        "LeaderAbility": "Imperial Birthright: When you reach 2 Influence with the Emperor: +1 Intrigue",
+        "SignetRingAbility": "Chronicler's Insight: You may choose: Acquire a card that costs 1 Persuasion OR trash a card from your hand. If it has a cost of 1+ Persuasion: +2 Spice",
+        "Complexity": 2
+      },
+      {
+        "DeckId": "Leader",
+        "DeckName": "Leaders",
+        "Name": "Lady Margot Fenring",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "House": "Fenring",
+        "LeaderAbility": "Loyalty: When you reach 2 Influence with the the Bene Gesserit, +2 Spice.",
+        "SignetRingAbility": "Arrakis Informant: +1 Spy on any purple space.",
+        "Complexity": 1
+      },
+      {
+        "DeckId": "Leader",
+        "DeckName": "Leaders",
+        "Name": "Feyd-Rautha Harkonnen",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "House": "Harkonnen",
+        "LeaderAbility": "Devious Strength: Reveal Turn: Recall a Spy for 2 Strength.",
+        "SignetRingAbility": "Personal Training: Move your Feyd token one space to the right on your Training track, earning the reward on the new space.",
+        "Complexity": 1
+      },
+      {
+        "DeckId": "Leader",
+        "DeckName": "Leaders",
+        "Name": "Lady Amber Metulli",
+        "Source": "Uprising",
+        "Compatibility": "All",
+        "House": "Metulli",
+        "LeaderAbility": "Desert Scouts: Reveal Turn: You may retreat one of your troops.",
+        "SignetRingAbility": "Fill Coffers: +1 Solari and if you have an Alliance: +1 Spice",
+        "Complexity": 1
+      },
+      {
+        "DeckId": "Leader",
+        "DeckName": "Leaders",
+        "Name": "Staban Tuek",
+        "Source": "Uprising",
+        "Compatibility": "Uprising",
+        "StartingEffect": "Limited Allies: You start the game without Diplomacy in your deck.",
+        "LeaderAbility": "Smuggle Spice: Whenever another player sends an Agent to a Maker board space you are spying on: +1 Spice.",
+        "SignetRingAbility": "Unseen Network: +1 Spy. If placed on green, you may trade 1 Spice for 3 Solari. If placed on a Faction space, you may trade 2 Solari for 1 Intrigue card.",
+        "Complexity": 3
+      },
+      {
+        "DeckId": "Leader",
+        "DeckName": "Leaders",
+        "Name": "Duncan Idaho",
+        "Source": "Bloodlines",
+        "Compatibility": "All",
+        "House": "Atreides",
+        "LeaderAbility": "Ginaz Swordmaster: The Swordmaster boardspace costs you 2 Solari less.",
+        "SignetRingAbility": "Into the Fray: You may take an Agent you sent this turn and deploy it to the Conflict as a 2 strength unit that can't be retreated. If you have your Swordmaster, it has 3 strength instead.",
+        "Complexity": 1
+      },
+      {
+        "DeckId": "Leader",
+        "DeckName": "Leaders",
+        "Name": "Chani",
+        "Source": "Bloodlines",
+        "Compatibility": "All",
+        "LeaderAbility": "Tactician: Whenever you retreat or lose any number of troops from the Conflict, advance your Tactics token that many spaces, earning rewards as you reach them. Reset the token after reaching the end of the track.",
+        "SignetRingAbility": "Fedaykin Maneuver: Retreat any number of your troops OR If you have 2+ Influnece with the Fremen, trade 1 Water for 2 card Draws.",
+        "Complexity": 2
+      },
+      {
+        "DeckId": "Leader",
+        "DeckName": "Leaders",
+        "Name": "Piter de Vries",
+        "Source": "Bloodlines",
+        "Compatibility": "All",
+        "House": "Harkonnen",
+        "StartingEffect": "Twisted Genius: Shuffle the Twisted Intrigue deck and place it face down near you.",
+        "LeaderAbility": "Twisted Genius: Round Start: Draw a Twisted Intrigue card. (These count as Intrigue cards and can be stolen)",
+        "SignetRingAbility": "Harkonnen Advisor: +1 Troop. You can't deploy this troop to the Conflict this turn.",
+        "Complexity": 2
+      },
+      {
+        "DeckId": "Leader",
+        "DeckName": "Leaders",
+        "Name": "Esmar Tuek",
+        "Source": "Bloodlines",
+        "Compatibility": "All",
+        "LeaderAbility": "Tuek's Sietch: Whenever you send an Agent to Tuek's Sietch: +1 Solari. Whenever an opponent sends an Agent there: +1 Intrigue.",
+        "SignetRingAbility": "Smuggle Spice: Place 1 bonus spice on Tuek's Sietch OR Take 1 bonus spice from a Maker board space.",
+        "Complexity": 1
+      },
+      {
+        "DeckId": "Leader",
+        "DeckName": "Leaders",
+        "Name": "Steersman Y'rkoon",
+        "Source": "Bloodlines",
+        "Compatibility": "All",
+        "StartingEffect": "Strange Form: You start the game with no Water and no Signet Ring in your deck. \n\nPlot Course: Shuffle the Navigation cards and draw a hand of five. Choose four to place face down above, in order. Return all others to the box. Whenever you reach 2 Influence with a Faction, play the next Navigation card above (starting from the left).",
+        "LeaderAbility": "Hungry for Spice: Whenever you gain 3+ spice in a single turn, Draw 1 card.",
+        "Complexity": 3
+      },
+      {
+        "DeckId": "Leader",
+        "DeckName": "Leaders",
+        "Name": "Count Hasimir Fenring",
+        "Source": "Bloodlines",
+        "Compatibility": "Uprising",
+        "House": "Fenring",
+        "LeaderAbility": "Assassin: Whenever you trash a card: +1 Solari.",
+        "SignetRingAbility": "Corrino Liason: You may trash a card in your play area OR Place 1 Spy with Deep Cover on the Emperor board area.",
+        "Complexity": 2
+      },
+      {
+        "DeckId": "Leader",
+        "DeckName": "Leaders",
+        "Name": "Gaius Helen Mohiam",
+        "Source": "Bloodlines",
+        "Compatibility": "Uprising",
+        "LeaderAbility": "Clandestine: Each card you play has the Spy icon. Whenever you could recall a Spy to Gather Intelligence, you must.",
+        "SignetRingAbility": "Listeners: Place 1 Spy on a Green space OR Pay 1 Spice -> +1 Spy.",
+        "Complexity": 3
+      },
+      {
+        "DeckId": "Leader",
+        "DeckName": "Leaders",
+        "Name": "Liet Kynes",
+        "Source": "Bloodlines",
+        "Compatibility": "Uprising",
+        "LeaderAbility": "Arrakis Planetologist: Ignore the Influence requirement of Sietch Tabr. You summon no sandworms. For each one you would, instead: Trash 1 card, +1 Spice, +1 Intrigue (even when the Conflict is protected by the Shield Wall).",
+        "SignetRingAbility": "Judge of the Change: If you sent an Agent this turn to: Green board space AND 2+ Influence with the Emperor -> +1 Water; Purple board space -> +1 Solari; Yellow board space: +1 Spice.",
+        "Complexity": 3
+      },
+      {
+        "DeckId": "Leader",
+        "DeckName": "Leaders",
+        "Name": "Kota Odax of Ix",
+        "Source": "Bloodlines",
+        "Compatibility": "Rise of Ix OR Bloodlines",
+        "StartingEffect": "Secret Project: Peek at the bottom Tech tile of each stack. Place one face down here.",
+        "LeaderAbility": "Secret Project: Whenever you could acquire a Tech tile, you may choose the one you set aside. It costs 1 Spice less.",
+        "SignetRingAbility": "Reverse Engineering: +1 Spice OR Trash one of your Tech tiles -> +1 Intrigue and Draw 1 card.",
+        "Complexity": 3
+      }
+    ],
+    "Navigation": [
+      {
+        "DeckId": "Navigation",
+        "DeckName": "Navigation Cards",
+        "Name": "Navigation Card 01",
+        "Effect": "+2 Solari. If this is in Navigation slot 4: For the rest of the game, during each of your Reveal turns, +1 Persuasion."
+      },
+      {
+        "DeckId": "Navigation",
+        "DeckName": "Navigation Cards",
+        "Name": "Navigation Card 02",
+        "Effect": "Trash a card. If you trash a card that costs 1+ Persuasion: +2 Spice."
+      },
+      {
+        "DeckId": "Navigation",
+        "DeckName": "Navigation Cards",
+        "Name": "Navigation Card 03",
+        "Effect": "+1 Water. If you played this as a result of reaching 2 Influence with the Spacing Guild: +1 Spice."
+      },
+      {
+        "DeckId": "Navigation",
+        "DeckName": "Navigation Cards",
+        "Name": "Navigation Card 04",
+        "Effect": "+1 Spice OR Pay 2 Solari -> Gain 1 Influence with a different Faction where you have 2+ Influence."
+      },
+      {
+        "DeckId": "Navigation",
+        "DeckName": "Navigation Cards",
+        "Name": "Navigation Card 05",
+        "Effect": "+1 Spice OR If this is in Navigation slot 1: Pay 1 Water -> Acquire The Spice Must Flow."
+      },
+      {
+        "DeckId": "Navigation",
+        "DeckName": "Navigation Cards",
+        "Name": "Navigation Card 06",
+        "Effect": "+1 Spice. If you have an Alliance: +1 Intrigue."
+      },
+      {
+        "DeckId": "Navigation",
+        "DeckName": "Navigation Cards",
+        "Name": "Navigation Card 07",
+        "Effect": "Lose 1 Influence with any faction -> Gain 1 influence with any faction."
+      },
+      {
+        "DeckId": "Navigation",
+        "DeckName": "Navigation Cards",
+        "Name": "Navigation Card 08",
+        "Effect": "Draw 1 card OR Spend 5 Spice -> +1 Victory Point."
+      },
+      {
+        "DeckId": "Navigation",
+        "DeckName": "Navigation Cards",
+        "Name": "Navigation Card 09",
+        "Effect": "+1 Troop OR Spend 3 Solari -> +3 Troops."
+      },
+      {
+        "DeckId": "Navigation",
+        "DeckName": "Navigation Cards",
+        "Name": "Navigation Card 10",
+        "Effect": "+1 Spy OR Recall a spy -> +1 Intrigue and +2 Spice."
+      }
+    ],
+    "Reserve": [
+      {
+        "DeckId": "Reserve",
+        "DeckName": "Reserve Cards",
+        "Name": "Prepare the Way",
+        "Source": "Uprising",
+        "Count": 8,
+        "Cost": {
+          "Persuasion": 2
+        },
+        "AgentAbility": "With 2 Influence with Bene Gesserit: Draw a card",
+        "BoardAccess": {
+          "Green": true,
+          "Purple": true
+        },
+        "Reveal": {
+          "Persuasion": 2
+        },
+        "Affiliation": {
+          "BeneGesserit": true
+        }
+      },
+      {
+        "DeckId": "Reserve",
+        "DeckName": "Reserve Cards",
+        "Name": "The Spice Must Flow (Uprising)",
+        "Source": "Uprising",
+        "Count": 10,
+        "Cost": {
+          "Persuasion": 9
+        },
+        "AcquisitionBonus": "+1 Victory Point",
+        "Reveal": {
+          "Ability": "+1 Spice"
+        },
+        "Affiliation": {
+          "Guild": true
+        }
+      }
+    ],
+    "Sardaukar": [
+      {
+        "DeckId": "Sardaukar",
+        "DeckName": "Sardaukar Skills",
+        "Name": "Canny",
+        "Compatibility": "Base",
+        "Count": 2,
+        "Effect": "If you have an Agent on a green board space: +2 Swords."
+      },
+      {
+        "DeckId": "Sardaukar",
+        "DeckName": "Sardaukar Skills",
+        "Name": "Driven",
+        "Compatibility": "Base",
+        "Count": 2,
+        "Effect": "Reveal turn: +1 Spice."
+      },
+      {
+        "DeckId": "Sardaukar",
+        "DeckName": "Sardaukar Skills",
+        "Name": "Loyal",
+        "Compatibility": "Base",
+        "Count": 2,
+        "Effect": "If you have 3+ Influence with the Emperor: +2 Swords."
+      },
+      {
+        "DeckId": "Sardaukar",
+        "DeckName": "Sardaukar Skills",
+        "Name": "Charismatic",
+        "Compatibility": "Base",
+        "Count": 2,
+        "Effect": "Reveal turn: +1 Persuasion"
+      },
+      {
+        "DeckId": "Sardaukar",
+        "DeckName": "Sardaukar Skills",
+        "Name": "Desparate",
+        "Compatibility": "Base",
+        "Count": 2,
+        "Effect": "Reveal turn: Trash this -> +3 Swords"
+      },
+      {
+        "DeckId": "Sardaukar",
+        "DeckName": "Sardaukar Skills",
+        "Name": "Fierce",
+        "Compatibility": "Uprising",
+        "Count": 2,
+        "Effect": "+1 Sword. If any opponent has a sandworm in the Conflict: +1 Sword."
+      }
+    ],
+    "Starter": [
+      {
+        "DeckId": "Starter",
+        "DeckName": "Starter Deck",
+        "Name": "Convincing Argument",
+        "Source": "Base",
+        "Compatibility": "All",
+        "CountPerPlayer": 2,
+        "Reveal": {
+          "Persuasion": 2
+        }
+      },
+      {
+        "DeckId": "Starter",
+        "DeckName": "Starter Deck",
+        "Name": "Dagger",
+        "Source": "Base",
+        "Compatibility": "All",
+        "CountPerPlayer": 2,
+        "BoardAccess": {
+          "Green": true
+        },
+        "Reveal": {
+          "Swords": 1
+        }
+      },
+      {
+        "DeckId": "Starter",
+        "DeckName": "Starter Deck",
+        "Name": "Diplomacy",
+        "Source": "Base",
+        "Compatibility": "All",
+        "CountPerPlayer": 1,
+        "BoardAccess": {
+          "Emperor": true,
+          "Guild": true,
+          "BeneGesserit": true,
+          "Fremen": true
+        },
+        "Reveal": {
+          "Persuasion": 1
+        }
+      },
+      {
+        "DeckId": "Starter",
+        "DeckName": "Starter Deck",
+        "Name": "Dune, The Desert Planet",
+        "Source": "Base",
+        "Compatibility": "All",
+        "CountPerPlayer": 2,
+        "BoardAccess": {
+          "Yellow": true
+        },
+        "Reveal": {
+          "Persuasion": 1
+        }
+      },
+      {
+        "DeckId": "Starter",
+        "DeckName": "Starter Deck",
+        "Name": "Reconnaissance",
+        "Source": "Base",
+        "Compatibility": "All",
+        "CountPerPlayer": 1,
+        "BoardAccess": {
+          "Purple": true
+        },
+        "Reveal": {
+          "Persuasion": 1
+        }
+      },
+      {
+        "DeckId": "Starter",
+        "DeckName": "Starter Deck",
+        "Name": "Seek Allies",
+        "Source": "Base",
+        "Compatibility": "All",
+        "CountPerPlayer": 1,
+        "AgentAbility": "Trash this card",
+        "BoardAccess": {
+          "Emperor": true,
+          "Guild": true,
+          "BeneGesserit": true,
+          "Fremen": true
+        }
+      },
+      {
+        "DeckId": "Starter",
+        "DeckName": "Starter Deck",
+        "Name": "Signet Ring",
+        "Source": "Base",
+        "Compatibility": "All",
+        "CountPerPlayer": 1,
+        "AgentAbility": "Signet Ring",
+        "BoardAccess": {
+          "Green": true,
+          "Purple": true,
+          "Yellow": true
+        },
+        "Reveal": {
+          "Persuasion": 1
+        }
+      }
+    ],
+    "Tech": [
+      {
+        "DeckId": "Tech",
+        "DeckName": "Tech Tiles",
+        "Name": "Training Depot",
+        "Source": "Bloodlines",
+        "Compatibility": "Rise of Ix",
+        "Cost": {
+          "Spice": 1
+        },
+        "Effect": "Reveal turn: If you have 6+ Persuasion or more, you add two swords to your Combat strength."
+      },
+      {
+        "DeckId": "Tech",
+        "DeckName": "Tech Tiles",
+        "Name": "Gene-Locked Vault",
+        "Source": "Bloodlines",
+        "Compatibility": "Rise of Ix",
+        "Cost": {
+          "Spice": 2
+        },
+        "AcquisitionBonus": "+1 Intrigue card Draw 1 card",
+        "Effect": "Your intrigue cards can't be stolen unless you have 5+."
+      },
+      {
+        "DeckId": "Tech",
+        "DeckName": "Tech Tiles",
+        "Name": "Glowglobes",
+        "Source": "Bloodlines",
+        "Compatibility": "Rise of Ix",
+        "Cost": {
+          "Spice": 2
+        },
+        "AcquisitionBonus": "+1 Influence with any faction",
+        "Effect": "You may look at the top card of your deck at any time."
+      },
+      {
+        "DeckId": "Tech",
+        "DeckName": "Tech Tiles",
+        "Name": "Planetary Array",
+        "Source": "Bloodlines",
+        "Compatibility": "Rise of Ix",
+        "Cost": {
+          "Spice": 2
+        },
+        "AcquisitionBonus": "You may trash a card",
+        "Effect": "When you win a conflict, draw 1 card."
+      },
+      {
+        "DeckId": "Tech",
+        "DeckName": "Tech Tiles",
+        "Name": "Servo-Receivers",
+        "Source": "Bloodlines",
+        "Compatibility": "Rise of Ix",
+        "Cost": {
+          "Spice": 2
+        },
+        "AcquisitionBonus": "Signet Ring ability",
+        "Effect": "Your Signet Ring has all four faction icons."
+      },
+      {
+        "DeckId": "Tech",
+        "DeckName": "Tech Tiles",
+        "Name": "Delivery Bay",
+        "Source": "Bloodlines",
+        "Compatibility": "Rise of Ix",
+        "Cost": {
+          "Spice": 3
+        },
+        "AcquisitionBonus": "Draw 1 card",
+        "Effect": "Reveal turn: If you have 6+ Persuasion, +2 Solari."
+      },
+      {
+        "DeckId": "Tech",
+        "DeckName": "Tech Tiles",
+        "Name": "Plasteel Blades",
+        "Source": "Bloodlines",
+        "Compatibility": "Bloodlines",
+        "Cost": {
+          "Spice": 3
+        },
+        "AcquisitionBonus": "+4 Solari",
+        "Effect": "Whenever you recruit a Sardaukar Commander: Trash this -> Gain an additional Sardauker Commander Skill.",
+        "Tags": {
+          "Sardaukar": true
+        }
+      },
+      {
+        "DeckId": "Tech",
+        "DeckName": "Tech Tiles",
+        "Name": "Suspensor Suits",
+        "Source": "Bloodlines",
+        "Compatibility": "Rise of Ix",
+        "Cost": {
+          "Spice": 3
+        },
+        "Effect": "For each Intrigue card you draw or steal during yoru turn: +1 Troop. Deploy it to the Conflict."
+      },
+      {
+        "DeckId": "Tech",
+        "DeckName": "Tech Tiles",
+        "Name": "Rapid Dropships",
+        "Source": "Bloodlines",
+        "Compatibility": "Rise of Ix",
+        "Cost": {
+          "Spice": 4
+        },
+        "AcquisitionBonus": "+2 Troops",
+        "Effect": "Agent turn: Flip to deploy troops."
+      },
+      {
+        "DeckId": "Tech",
+        "DeckName": "Tech Tiles",
+        "Name": "Self-Destroying Messages",
+        "Source": "Bloodlines",
+        "Compatibility": "Rise of Ix",
+        "Cost": {
+          "Spice": 4
+        },
+        "AcquisitionBonus": "+2 Intrigue cards",
+        "Effect": "Reveal turn: +1 Persuasion."
+      },
+      {
+        "DeckId": "Tech",
+        "DeckName": "Tech Tiles",
+        "Name": "Navigation Chamber",
+        "Source": "Bloodlines",
+        "Compatibility": "Rise of Ix",
+        "Cost": {
+          "Spice": 5
+        },
+        "AcquisitionBonus": "+1 Influence with any faction",
+        "Effect": "Board spaces cost you 1 Spice or 1 Solari less."
+      },
+      {
+        "DeckId": "Tech",
+        "DeckName": "Tech Tiles",
+        "Name": "Sardaukar High Command",
+        "Source": "Bloodlines",
+        "Compatibility": "Bloodlines",
+        "Cost": {
+          "Spice": 7
+        },
+        "AcquisitionBonus": "+1 Victory Point",
+        "Effect": "Recruiting a Sardaukar Commander (including when you acquire one) costs you 1 Solari less.",
+        "VPsAvailable": 1,
+        "Tags": {
+          "Sardaukar": true
+        }
+      },
+      {
+        "DeckId": "Tech",
+        "DeckName": "Tech Tiles",
+        "Name": "Forbidden Weapons",
+        "Source": "Bloodlines",
+        "Compatibility": "Uprising",
+        "Cost": {
+          "Spice": 2
+        },
+        "AcquisitionBonus": "Blow the Shield Wall and +1 Troop",
+        "Effect": "Reveal turn: You must choose: +3 Swords and -1 Influence with any faction OR Lose all your spice and trash this.",
+        "Tags": {
+          "Sandworms": true
+        }
+      },
+      {
+        "DeckId": "Tech",
+        "DeckName": "Tech Tiles",
+        "Name": "Advanced Data Analysis",
+        "Source": "Bloodlines",
+        "Compatibility": "Uprising",
+        "Cost": {
+          "Spice": 3
+        },
+        "Effect": "To acquire this, you must trash one of your Spies from the board. Once per round: +1 Intrigue card.",
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Tech",
+        "DeckName": "Tech Tiles",
+        "Name": "Ornithopter Fleet",
+        "Source": "Bloodlines",
+        "Compatibility": "Uprising",
+        "Cost": {
+          "Spice": 4
+        },
+        "AcquisitionBonus": "+2 Troops",
+        "Effect": "All of your battle icons are now Ornithopters.",
+        "Tags": {
+          "BattleIcons": true
+        }
+      },
+      {
+        "DeckId": "Tech",
+        "DeckName": "Tech Tiles",
+        "Name": "Panopticon",
+        "Source": "Bloodlines",
+        "Compatibility": "Uprising",
+        "Cost": {
+          "Spice": 5
+        },
+        "Effect": "Reveal turn: +1 Spy and +1 Troop. Endgame: Gain 1 Influence with each Faction where you have 1 or less Influence.",
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Tech",
+        "DeckName": "Tech Tiles",
+        "Name": "Spy Drones",
+        "Source": "Bloodlines",
+        "Compatibility": "Uprising",
+        "Cost": {
+          "Spice": 5
+        },
+        "AcquisitionBonus": "+2 Spies with Deep Cover",
+        "Effect": "Once per round: +1 Solari AND If you recalled a Spy this turn: You may trash a card.",
+        "Tags": {
+          "Spies": true
+        }
+      },
+      {
+        "DeckId": "Tech",
+        "DeckName": "Tech Tiles",
+        "Name": "CHOAM Transports",
+        "Source": "Bloodlines",
+        "Compatibility": "Uprising",
+        "Cost": {
+          "Spice": 6
+        },
+        "AcquisitionBonus": "+1 Contract",
+        "Effect": "When you complete a contract: Draw a card. Endgame: Worth 1 Victory Point if you have completed for or more contracts.",
+        "VPsAvailable": 1,
+        "Tags": {
+          "Contracts": true
+        }
+      }
+    ]
+  },
+  "board": [
+    {
+      "Name": "Sardaukar",
+      "Source": "Uprising",
+      "Cost": {
+        "Spice": 4
+      },
+      "Access": {
+        "Emperor": true
+      },
+      "HasCommander": true,
+      "SpyPostLinks": "Dutiful Service",
+      "Effect": "Gain 1 Intrigue, Recruit 4 Troops."
+    },
+    {
+      "Name": "Dutiful Service",
+      "Source": "Uprising",
+      "Access": {
+        "Emperor": true
+      },
+      "HasCommander": true,
+      "SpyPostLinks": "Sardaukar",
+      "Effect": "Gain 1 Contract (if CHOAM module in use; otherwise, gain 2 Solari)."
+    },
+    {
+      "Name": "Heighliner",
+      "Source": "Uprising",
+      "Cost": {
+        "Spice": 5
+      },
+      "Access": {
+        "Guild": true
+      },
+      "IsCombatSpace": true,
+      "SpyPostLinks": "Deliver Supplies",
+      "Effect": "Recruit 5 Troops."
+    },
+    {
+      "Name": "Deliver Supplies",
+      "Source": "Uprising",
+      "Access": {
+        "Guild": true
+      },
+      "HasCommander": true,
+      "SpyPostLinks": "Heighliner",
+      "Effect": "Gain 1 Water."
+    },
+    {
+      "Name": "Espionage",
+      "Source": "Uprising",
+      "Cost": {
+        "Spice": 1
+      },
+      "Access": {
+        "BeneGesserit": true
+      },
+      "SpyPostLinks": "Secrets",
+      "Effect": "Draw 1 Card, Place 1 Spy on an unoccupied Observation Post."
+    },
+    {
+      "Name": "Secrets",
+      "Source": "Uprising",
+      "Access": {
+        "BeneGesserit": true
+      },
+      "SpyPostLinks": "Espionage",
+      "Effect": "Gain 1 Intrigue. May steal 1 Intrigue (random) from each opponent with 4+ Intrigue."
+    },
+    {
+      "Name": "Desert Tactics",
+      "Source": "Uprising",
+      "Cost": {
+        "Water": 1
+      },
+      "Access": {
+        "Fremen": true
+      },
+      "IsCombatSpace": true,
+      "SpyPostLinks": "Fremkit",
+      "Effect": "Recruit 1 Troop, May trash 1 Card (hand/discard)."
+    },
+    {
+      "Name": "Fremkit",
+      "Source": "Uprising",
+      "Access": {
+        "Fremen": true
+      },
+      "IsCombatSpace": true,
+      "SpyPostLinks": "Desert Tactics",
+      "Effect": "Draw 1 Card."
+    },
+    {
+      "Name": "High Council",
+      "Source": "Uprising",
+      "Cost": {
+        "Solari": 5
+      },
+      "Access": {
+        "Green": true
+      },
+      "HasCommander": true,
+      "SpyPostLinks": "Imperial Privilege, Swordmaster",
+      "Effect": "1st Visit: Place Councilor token; gain 2 Persuasion ongoing. Subsequent: Gain 2 Spice, 1 Intrigue, Recruit 3 Troops."
+    },
+    {
+      "Name": "Imperial Privilege",
+      "Source": "Uprising",
+      "Cost": {
+        "Solari": 3
+      },
+      "Access": {
+        "Green": true
+      },
+      "SpyPostLinks": "High Council, Swordmaster",
+      "Effect": "Requirement: 2+ Influence with Emperor | May discard 1 Intrigue to draw 1 Intrigue, Recall 1 other Agent, Draw 1 Card."
+    },
+    {
+      "Name": "Swordmaster",
+      "Source": "Uprising",
+      "Cost": {
+        "Solari": 8
+      },
+      "Access": {
+        "Green": true
+      },
+      "SpyPostLinks": "High Council, Imperial Privilege",
+      "Effect": "Permanently gain 3rd Agent. (Cost 8 Solari for 1st player, 6 for others)"
+    },
+    {
+      "Name": "Assembly Hall",
+      "Source": "Uprising",
+      "Access": {
+        "Green": true
+      },
+      "SpyPostLinks": "Gather Support",
+      "Effect": "Gain 1 Intrigue. During Reveal Turn, if Agent here, gain 1 Persuasion."
+    },
+    {
+      "Name": "Gather Support",
+      "Source": "Uprising",
+      "Access": {
+        "Green": true
+      },
+      "HasCommander": true,
+      "SpyPostLinks": "Assembly Hall",
+      "Effect": "Choose: Recruit 2 Troops OR Pay 2 Solari to recruit 2 Troops and gain 1 Water."
+    },
+    {
+      "Name": "CHOAM - Shipping",
+      "Source": "Uprising",
+      "Cost": {
+        "Spice": 3
+      },
+      "Access": {
+        "Yellow": true
+      },
+      "SpyPostLinks": "CHOAM - Accept Contract",
+      "Effect": "Requirement: 2+ Influence with Guild | Gain 5 Solari, +1 Influence with a Faction of choice."
+    },
+    {
+      "Name": "CHOAM - Accept Contract",
+      "Source": "Uprising",
+      "Access": {
+        "Yellow": true
+      },
+      "SpyPostLinks": "CHOAM - Shipping",
+      "Effect": "Draw 1 Card, Gain 1 Contract (if CHOAM module in use; otherwise, gain 2 Solari)."
+    },
+    {
+      "Name": "Deep Desert",
+      "Source": "Uprising",
+      "Cost": {
+        "Water": 3
+      },
+      "Access": {
+        "Yellow": true
+      },
+      "IsCombatSpace": true,
+      "SpyPostLinks": "Dedicated",
+      "Effect": "Choose: Gain 4 Spice OR Summon 2 Sandworms. Collect bonus Spice."
+    },
+    {
+      "Name": "Hagga Basin",
+      "Source": "Uprising",
+      "Cost": {
+        "Water": 1
+      },
+      "Access": {
+        "Yellow": true
+      },
+      "IsCombatSpace": true,
+      "SpyPostLinks": "Dedicated",
+      "Effect": "Choose: Gain 2 Spice OR Summon 1 Sandworm. Collect bonus Spice."
+    },
+    {
+      "Name": "Imperial Basin",
+      "Source": "Uprising",
+      "Access": {
+        "Yellow": true
+      },
+      "IsCombatSpace": true,
+      "SpyPostLinks": "Dedicated",
+      "Effect": "Gain 1 Spice. Collect bonus Spice. Control: Controller gains 1 Spice when any player uses."
+    },
+    {
+      "Name": "Sietch Tabr",
+      "Source": "Uprising",
+      "Access": {
+        "Purple": true,
+        "Fremen": true
+      },
+      "IsCombatSpace": true,
+      "SpyPostLinks": "Research Station",
+      "Effect": "Requirement: 2+ Influence with Fremen | Choose: Gain 1 Maker Hook, Recruit 1 Troop, Gain 1 Water OR Destroy Shield Wall, Gain 1 Water."
+    },
+    {
+      "Name": "Research Station",
+      "Source": "Uprising",
+      "Cost": {
+        "Water": 2
+      },
+      "Access": {
+        "Purple": true
+      },
+      "IsCombatSpace": true,
+      "SpyPostLinks": "Sietch Tabr, Spice Refinery",
+      "Effect": "Recruit 2 Troops, Draw 2 Cards."
+    },
+    {
+      "Name": "Spice Refinery",
+      "Source": "Uprising",
+      "Access": {
+        "Purple": true
+      },
+      "IsCombatSpace": true,
+      "SpyPostLinks": "Arrakeen, Research Station",
+      "Effect": "Choose: Gain 2 Solari OR Pay 1 Spice for 4 Solari. Control: Controller gains 1 Solari when any player uses."
+    },
+    {
+      "Name": "Arrakeen",
+      "Source": "Uprising",
+      "Access": {
+        "Purple": true
+      },
+      "IsCombatSpace": true,
+      "SpyPostLinks": "Spice Refinery",
+      "Effect": "Recruit 1 Troop, Draw 1 Card. Control: Controller gains 1 Solari when any player uses."
+    }
+  ]
+}

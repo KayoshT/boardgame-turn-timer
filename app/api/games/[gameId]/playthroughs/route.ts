@@ -1,5 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql, getUserId } from "@/lib/db"
+import {
+  attachTrackedItemsToPlaythrough,
+  attachTrackedItemsToPlaythroughs,
+  getSubmittedTrackedItems,
+  replacePlaythroughResultItems,
+} from "@/lib/playthrough-result-items"
 
 type Row = Record<string, any>
 
@@ -502,10 +508,6 @@ function finaliseServerResultFieldsForLeader(fields: MutableDuneResultFields, le
   return next
 }
 
-function resultJsonObjectSql() {
-  // Marker for shared JSON key names.
-  // Keep JSON construction inline; tagged SQL helpers do not accept raw SQL fragments.
-}
 
 async function fetchCompletePlaythrough(playthroughId: string) {
   const rows = await sql`
@@ -649,7 +651,7 @@ async function fetchCompletePlaythrough(playthroughId: string) {
     GROUP BY p.id, p.game_id, p.group_id, p.season_id, p.timestamp, p.recorded_by, p.round_count, p.notes
   `
 
-  return firstRow(rows)
+  return attachTrackedItemsToPlaythrough(firstRow(rows))
 }
 
 export async function GET(request: NextRequest, { params }: { params: { gameId: string } }) {
@@ -798,7 +800,9 @@ export async function GET(request: NextRequest, { params }: { params: { gameId: 
       ORDER BY p.timestamp DESC
     `
 
-    return NextResponse.json({ success: true, data: playthroughs })
+    const hydratedPlaythroughs = await attachTrackedItemsToPlaythroughs(playthroughs)
+
+    return NextResponse.json({ success: true, data: hydratedPlaythroughs })
   } catch (error) {
     console.error("Error fetching playthroughs:", error)
     return NextResponse.json(
@@ -912,7 +916,8 @@ export async function POST(request: NextRequest, { params }: { params: { gameId:
 
       const fields = finaliseServerResultFieldsForLeader(derivedFieldsByIndex[index], leaderName)
 
-      await sql`
+      const insertedResult = firstRow(
+        await sql`
         INSERT INTO playthrough_results (
           playthrough_id,
           player_id,
@@ -1041,7 +1046,20 @@ export async function POST(request: NextRequest, { params }: { params: { gameId:
           ${fields.hasMakerHooks},
           ${fields.notes}
         )
-      `
+        RETURNING id
+      `,
+      )
+
+      if (!insertedResult?.id) {
+        throw new Error("Failed to create playthrough result")
+      }
+
+      await replacePlaythroughResultItems({
+        playthroughId: playthrough.id,
+        playthroughResultId: insertedResult.id,
+        playerId: actualPlayerId,
+        items: getSubmittedTrackedItems(result),
+      })
     }
 
     const completePlaythrough = await fetchCompletePlaythrough(playthrough.id)
