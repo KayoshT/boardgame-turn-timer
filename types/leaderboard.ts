@@ -167,6 +167,8 @@ export interface PlaythroughPlayerResult {
   has_maker_hooks?: NullableBoolean
 
   notes?: string | null
+  isSummary?: boolean
+  hasFullDetails?: boolean
 
   // Legacy API aliases.
   finalVp?: NullableNumber
@@ -195,6 +197,8 @@ export interface Playthrough {
   notes?: string | null
   results: PlaythroughPlayerResult[]
   recorded_by: string
+  isSummary?: boolean
+  hasFullDetails?: boolean
 }
 
 export interface PlayerRanking {

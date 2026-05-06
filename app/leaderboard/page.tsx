@@ -43,6 +43,7 @@ export default function LeaderboardPage() {
     concludeSeason,
     fetchSeasons,
     fetchSeasonBadges,
+    loadFullPlaythrough,
   } = useLeaderboard()
 
   const [newGameName, setNewGameName] = useState("")
@@ -153,7 +154,9 @@ export default function LeaderboardPage() {
   // Filter playthroughs for the current game
   const currentGamePlaythroughs = selectedGameId ? playthroughs.filter((p) => p.game_id === selectedGameId) : []
 
-  console.log("Current game playthroughs:", currentGamePlaythroughs)
+  if (process.env.NEXT_PUBLIC_DEBUG_LEADERBOARD === "true") {
+    console.log("Current game playthroughs:", currentGamePlaythroughs)
+  }
 
   // Show game leaderboard if a game is selected
   if (selectedGameId && currentLeaderboard) {
@@ -193,6 +196,7 @@ export default function LeaderboardPage() {
           onConcludeSeason={handleConcludeSeason}
           onFetchSeasons={fetchSeasons}
           onFetchSeasonBadges={fetchSeasonBadges}
+          onLoadPlaythrough={loadFullPlaythrough}
           loading={loading}
           playthroughLoading={playthroughLoading}
           seasonLoading={seasonLoading}

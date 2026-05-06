@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -41,6 +41,7 @@ interface PlaythroughHistoryProps {
   gameType?: string
   onDeletePlaythrough: (playthroughId: string) => Promise<boolean>
   onUpdatePlaythrough: (playthroughId: string, results: any[], date?: string, roundCount?: number) => Promise<void>
+  onLoadPlaythrough?: (gameId: string, playthroughId: string) => Promise<any>
   loading?: boolean
 }
 
@@ -52,12 +53,15 @@ export const PlaythroughHistory = ({
   gameType,
   onDeletePlaythrough,
   onUpdatePlaythrough,
+  onLoadPlaythrough,
   loading = false,
 }: PlaythroughHistoryProps) => {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [editingPlaythrough, setEditingPlaythrough] = useState<any | null>(null)
   const [expandedPlaythrough, setExpandedPlaythrough] = useState<string | null>(null)
+  const [loadingPlaythroughId, setLoadingPlaythroughId] = useState<string | null>(null)
+  const [fullPlaythroughsById, setFullPlaythroughsById] = useState<Record<string, any>>({})
 
   const handleDelete = async () => {
     if (!confirmDeleteId) return
@@ -70,9 +74,41 @@ export const PlaythroughHistory = ({
     setDeletingId(null)
   }
 
-  const handleEdit = (playthrough: any) => {
+  const hasFullDetails = (playthrough: any) => {
+    if (playthrough?.hasFullDetails === true || playthrough?.isSummary === false) return true
+    return (playthrough?.results ?? []).some((result: any) =>
+      Array.isArray(result?.acquisitions) ||
+      Array.isArray(result?.trackedItems) ||
+      result?.vp_sources_base !== undefined ||
+      result?.vpSourcesBase !== undefined,
+    )
+  }
+
+  const ensureFullPlaythrough = async (playthrough: any) => {
+    const cached = fullPlaythroughsById[playthrough.id]
+    if (cached) return cached
+
+    if (!onLoadPlaythrough || hasFullDetails(playthrough)) {
+      const full = { ...playthrough, isSummary: false, hasFullDetails: true }
+      setFullPlaythroughsById((prev) => ({ ...prev, [playthrough.id]: full }))
+      return full
+    }
+
+    setLoadingPlaythroughId(playthrough.id)
+    try {
+      const loaded = await onLoadPlaythrough(gameId, playthrough.id)
+      const full = { ...playthrough, ...loaded, game_type: gameType, isSummary: false, hasFullDetails: true }
+      setFullPlaythroughsById((prev) => ({ ...prev, [playthrough.id]: full }))
+      return full
+    } finally {
+      setLoadingPlaythroughId(null)
+    }
+  }
+
+  const handleEdit = async (playthrough: any) => {
+    const fullPlaythrough = await ensureFullPlaythrough(playthrough)
     const playthroughWithGameType = {
-      ...playthrough,
+      ...fullPlaythrough,
       game_type: gameType,
     }
     setEditingPlaythrough(playthroughWithGameType)
@@ -81,6 +117,11 @@ export const PlaythroughHistory = ({
   const handleUpdatePlaythrough = async (results: any[], date?: string, roundCount?: number) => {
     if (!editingPlaythrough) return
     await onUpdatePlaythrough(editingPlaythrough.id, results, date, roundCount)
+    setFullPlaythroughsById((prev) => {
+      const next = { ...prev }
+      delete next[editingPlaythrough.id]
+      return next
+    })
     setEditingPlaythrough(null)
   }
 
@@ -88,9 +129,34 @@ export const PlaythroughHistory = ({
     setEditingPlaythrough(null)
   }
 
-  const toggleExpanded = (playthroughId: string) => {
-    setExpandedPlaythrough(expandedPlaythrough === playthroughId ? null : playthroughId)
+  const toggleExpanded = async (playthrough: any) => {
+    if (expandedPlaythrough === playthrough.id) {
+      setExpandedPlaythrough(null)
+      return
+    }
+
+    try {
+      await ensureFullPlaythrough(playthrough)
+      setExpandedPlaythrough(playthrough.id)
+    } catch (error) {
+      console.error("Failed to load playthrough details:", error)
+    }
   }
+
+  // Group playthroughs by season only when the source list changes.
+  const { currentSeasonPlaythroughs, pastSeasonPlaythroughs } = useMemo(() => {
+    if (!currentSeasonId) {
+      return {
+        currentSeasonPlaythroughs: playthroughs,
+        pastSeasonPlaythroughs: [],
+      }
+    }
+
+    return {
+      currentSeasonPlaythroughs: playthroughs.filter((p) => p.season_id === currentSeasonId),
+      pastSeasonPlaythroughs: playthroughs.filter((p) => p.season_id !== currentSeasonId),
+    }
+  }, [playthroughs, currentSeasonId])
 
   if (loading) {
     return (
@@ -125,13 +191,12 @@ export const PlaythroughHistory = ({
     )
   }
 
-  // Group playthroughs by season
-  const currentSeasonPlaythroughs = playthroughs.filter((p) => p.season_id === currentSeasonId)
-  const pastSeasonPlaythroughs = playthroughs.filter((p) => p.season_id !== currentSeasonId)
 
   const renderPlaythroughCard = (playthrough: any, isPastSeason = false) => {
+    const displayPlaythrough = fullPlaythroughsById[playthrough.id] ?? playthrough
     const isExpanded = expandedPlaythrough === playthrough.id
     const isDuneGame = gameType === "dune"
+    const isLoadingDetails = loadingPlaythroughId === playthrough.id
 
     return (
       <div
@@ -167,19 +232,19 @@ export const PlaythroughHistory = ({
                 variant="ghost"
                 size="sm"
                 className="h-8 w-8 p-0 text-slate-500 hover:text-slate-700 hover:bg-slate-100"
-                onClick={() => toggleExpanded(playthrough.id)}
-                disabled={!!deletingId}
+                onClick={() => toggleExpanded(playthrough)}
+                disabled={!!deletingId || isLoadingDetails}
               >
-                {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                {isLoadingDetails ? <Loader2 className="h-4 w-4 animate-spin" /> : isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-8 w-8 p-0 text-blue-500 hover:text-blue-700 hover:bg-blue-50"
                 onClick={() => handleEdit(playthrough)}
-                disabled={!!deletingId}
+                disabled={!!deletingId || isLoadingDetails}
               >
-                <Edit className="h-4 w-4" />
+                {isLoadingDetails ? <Loader2 className="h-4 w-4 animate-spin" /> : <Edit className="h-4 w-4" />}
               </Button>
               <Button
                 variant="ghost"
@@ -200,22 +265,24 @@ export const PlaythroughHistory = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-medium">{playthrough.results.length} players</span>
+              <span className="text-sm font-medium">{displayPlaythrough.results.length} players</span>
             </div>
             <Button
               variant="ghost"
               size="sm"
               className="text-xs text-slate-600 hover:text-slate-800 hover:bg-slate-100"
-              onClick={() => toggleExpanded(playthrough.id)}
+              onClick={() => toggleExpanded(playthrough)}
+              disabled={isLoadingDetails}
             >
-              <Eye className="w-3 h-3 mr-1" />
-              {isExpanded ? "Hide Details" : "View Details"}
+              {isLoadingDetails ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Eye className="w-3 h-3 mr-1" />}
+              {isLoadingDetails ? "Loading..." : isExpanded ? "Hide Details" : "View Details"}
             </Button>
           </div>
 
           {/* Quick Results Preview */}
           <div className="flex flex-wrap gap-2 mt-3">
             {playthrough.results
+              .slice()
               .sort((a: any, b: any) => a.rank - b.rank)
               .slice(0, 3) // Show only top 3 in preview
               .map((result: any) => (
@@ -245,16 +312,16 @@ export const PlaythroughHistory = ({
                   </span>
                 </Badge>
               ))}
-            {playthrough.results.length > 3 && (
+            {displayPlaythrough.results.length > 3 && (
               <Badge variant="outline" className="text-xs text-muted-foreground">
-                +{playthrough.results.length - 3} more
+                +{displayPlaythrough.results.length - 3} more
               </Badge>
             )}
           </div>
         </div>
 
         {/* Expanded Details */}
-        {isExpanded && <PlaythroughDetails playthrough={playthrough} gameType={gameType} />}
+        {isExpanded && <PlaythroughDetails playthrough={displayPlaythrough} gameType={gameType} />}
       </div>
     )
   }

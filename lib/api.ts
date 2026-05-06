@@ -127,9 +127,24 @@ export const playerApi = {
 }
 
 export const playthroughApi = {
-  async getPlaythroughsForGame(gameId: string): Promise<ApiResponse<any[]>> {
+  async getPlaythroughsForGame(
+    gameId: string,
+    options: { includeDetails?: boolean } = {},
+  ): Promise<ApiResponse<any[]>> {
     try {
-      const response = await fetch(`${API_BASE}/games/${gameId}/playthroughs`)
+      const params = options.includeDetails ? "?includeDetails=true" : ""
+      const response = await fetch(`${API_BASE}/games/${gameId}/playthroughs${params}`)
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error("API Error:", error)
+      return { success: false, error: "Network error" }
+    }
+  },
+
+  async getPlaythrough(gameId: string, playthroughId: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await fetch(`${API_BASE}/games/${gameId}/playthroughs/${playthroughId}`)
       const data = await response.json()
       return data
     } catch (error) {
@@ -187,9 +202,18 @@ export const playthroughApi = {
 
 // New Season API functions
 export const seasonApi = {
-  async getCurrentSeason(groupId: string): Promise<ApiResponse<any>> {
+  async getCurrentSeason(
+    groupId: string,
+    gameId?: string | null,
+    options: { includeStats?: boolean } = {},
+  ): Promise<ApiResponse<any>> {
     try {
-      const response = await fetch(`${API_BASE}/groups/${groupId}/seasons/current`)
+      const params = new URLSearchParams()
+      if (gameId) params.set("gameId", gameId)
+      if (options.includeStats) params.set("includeStats", "true")
+
+      const query = params.toString()
+      const response = await fetch(`${API_BASE}/groups/${groupId}/seasons/current${query ? `?${query}` : ""}`)
       const data = await response.json()
       return data
     } catch (error) {

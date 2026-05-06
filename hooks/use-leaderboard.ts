@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import type {
   Group,
   Game,
@@ -14,6 +14,49 @@ import type { SeasonSummary } from "@/types/seasons"
 import { groupApi, gameApi, playerApi, playthroughApi, seasonApi } from "@/lib/api"
 import { groupStorage } from "@/lib/group-storage"
 import { track } from "@vercel/analytics/react"
+
+const DEBUG_LEADERBOARD = process.env.NEXT_PUBLIC_DEBUG_LEADERBOARD === "true"
+
+const debugLog = (...args: unknown[]) => {
+  if (DEBUG_LEADERBOARD) console.log(...args)
+}
+
+const debugTime = (label: string) => {
+  if (DEBUG_LEADERBOARD) console.time(label)
+}
+
+const debugTimeEnd = (label: string) => {
+  if (DEBUG_LEADERBOARD) console.timeEnd(label)
+}
+
+type SeasonTopPlayer = SeasonSummary["topPlayers"][number]
+
+const buildSeasonTopPlayers = (rankings: PlayerRanking[] | undefined): SeasonTopPlayer[] => {
+  return (rankings ?? []).map((player) => {
+    const totalGames = player.totalPlaythroughs
+    const wins = player.rankCounts.first
+    const winRate = totalGames > 0 ? Number(((wins / totalGames) * 100).toFixed(2)) : 0
+    const averageRank =
+      player.chips.length > 0
+        ? Number((player.chips.reduce((sum, rank) => sum + rank, 0) / player.chips.length).toFixed(2))
+        : 0
+
+    return {
+      playerId: player.playerId,
+      playerName: player.playerName,
+      player_id: player.playerId,
+      player_name: player.playerName,
+      totalGames,
+      games_played: totalGames,
+      firstPlaces: wins,
+      wins,
+      winRate,
+      win_rate_percentage: winRate,
+      averageRank,
+    }
+  })
+}
+
 
 export const useLeaderboard = () => {
   const [groups, setGroups] = useState<Group[]>([])
@@ -65,16 +108,16 @@ export const useLeaderboard = () => {
   const loadGroups = async () => {
     setLoading(true)
     try {
-      console.time("Load Groups")
+      debugTime("Load Groups")
 
       const allowedGroupIds = groupStorage.getStoredGroupIds()
-      console.log("Allowed group IDs from localStorage:", allowedGroupIds)
+      debugLog("Allowed group IDs from localStorage:", allowedGroupIds)
 
       const response = await groupApi.getGroups(allowedGroupIds)
-      console.timeEnd("Load Groups")
+      debugTimeEnd("Load Groups")
 
       if (response.success && response.data) {
-        console.log("Loaded groups:", response.data)
+        debugLog("Loaded groups:", response.data)
         setGroups(response.data)
       } else {
         console.error("Failed to load groups:", response.error)
@@ -94,9 +137,9 @@ export const useLeaderboard = () => {
   const loadGamesForGroup = async (groupId: string) => {
     setGameLoading(true)
     try {
-      console.time("Load Games")
+      debugTime("Load Games")
       const response = await gameApi.getGamesForGroup(groupId)
-      console.timeEnd("Load Games")
+      debugTimeEnd("Load Games")
       if (response.success && response.data) {
         setGames(response.data)
       } else {
@@ -116,9 +159,9 @@ export const useLeaderboard = () => {
 
   const loadPlayersForGroup = async (groupId: string) => {
     try {
-      console.time("Load Players")
+      debugTime("Load Players")
       const response = await playerApi.getPlayersForGroup(groupId)
-      console.timeEnd("Load Players")
+      debugTimeEnd("Load Players")
       if (response.success && response.data) {
         setPlayers(response.data)
       } else {
@@ -137,11 +180,11 @@ export const useLeaderboard = () => {
   const loadPlaythroughsForGame = async (gameId: string) => {
     setPlaythroughLoading(true)
     try {
-      console.time("Load Playthroughs")
+      debugTime("Load Playthroughs")
       const response = await playthroughApi.getPlaythroughsForGame(gameId)
-      console.timeEnd("Load Playthroughs")
+      debugTimeEnd("Load Playthroughs")
       if (response.success && response.data) {
-        console.log("Loaded playthroughs:", response.data)
+        debugLog("Loaded playthroughs:", response.data)
         setPlaythroughs(response.data)
       } else {
         console.error("Failed to load playthroughs:", response.error)
@@ -158,27 +201,46 @@ export const useLeaderboard = () => {
     }
   }
 
+  const loadFullPlaythrough = async (gameId: string, playthroughId: string): Promise<Playthrough> => {
+    debugTime("Load Full Playthrough")
+    const response = await playthroughApi.getPlaythrough(gameId, playthroughId)
+    debugTimeEnd("Load Full Playthrough")
+
+    if (!response.success || !response.data) {
+      track("error_occurred", {
+        error_type: "load_playthrough_failed",
+        error_message: response.error ?? "Unknown error",
+      })
+      throw new Error(response.error || "Failed to load playthrough")
+    }
+
+    const fullPlaythrough = response.data as Playthrough
+    setPlaythroughs((prev) =>
+      prev.map((playthrough) =>
+        playthrough.id === playthroughId ? { ...playthrough, ...fullPlaythrough } : playthrough,
+      ),
+    )
+
+    return fullPlaythrough
+  }
+
   const loadCurrentSeasonForGame = async (groupId: string, gameId: string) => {
     setSeasonLoading(true)
     try {
-      console.time("Load Current Season")
-      console.log("Loading season for groupId:", groupId, "gameId:", gameId)
+      debugTime("Load Current Season")
+      debugLog("Loading season for groupId:", groupId, "gameId:", gameId)
 
-      const url = `/api/groups/${groupId}/seasons/current?gameId=${gameId}`
-      console.log("Fetching from URL:", url)
+      const response = await seasonApi.getCurrentSeason(groupId, gameId)
 
-      const response = await fetch(url)
-      const data = await response.json()
+      debugTimeEnd("Load Current Season")
+      debugLog("Season API response:", response)
 
-      console.timeEnd("Load Current Season")
-      console.log("Season API response:", data)
-
-      if (data.success && data.data) {
-        console.log("Frontend received season ID:", data.data.season?.id)
-        console.log("Setting season summary:", data.data)
-        setCurrentSeasonSummary(data.data)
+      if (response.success && response.data) {
+        debugLog("Frontend received season ID:", response.data.season?.id)
+        debugLog("Setting season summary:", response.data)
+        setCurrentSeasonSummary(response.data)
       } else {
-        console.error("Failed to load current season:", data.error)
+        console.error("Failed to load current season:", response.error)
         // Don't track this as an error since it might be expected for new games
         setCurrentSeasonSummary(null)
       }
@@ -195,16 +257,16 @@ export const useLeaderboard = () => {
   }
 
   const createGroup = async (name: string, description?: string): Promise<Group> => {
-    console.time("Create Group")
+    debugTime("Create Group")
     const response = await groupApi.createGroup(name, description)
-    console.timeEnd("Create Group")
+    debugTimeEnd("Create Group")
     if (!response.success || !response.data) {
       track("error_occurred", { error_type: "create_group_failed", error_message: response.error ?? "Unknown error" })
       throw new Error(response.error || "Failed to create group")
     }
 
     groupStorage.storeGroupCode(response.data.id, response.data.code, response.data.name)
-    console.log("Stored group code for created group:", response.data.id)
+    debugLog("Stored group code for created group:", response.data.id)
 
     track("group_created", { group_name_length: response.data.name.length })
 
@@ -213,16 +275,16 @@ export const useLeaderboard = () => {
   }
 
   const joinGroup = async (code: string): Promise<Group> => {
-    console.time("Join Group")
+    debugTime("Join Group")
     const response = await groupApi.joinGroup(code)
-    console.timeEnd("Join Group")
+    debugTimeEnd("Join Group")
     if (!response.success || !response.data) {
       track("error_occurred", { error_type: "join_group_failed", error_message: response.error ?? "Unknown error" })
       throw new Error(response.error || "Failed to join group")
     }
 
     groupStorage.storeGroupCode(response.data.id, response.data.code, response.data.name)
-    console.log("Stored group code for joined group:", response.data.id)
+    debugLog("Stored group code for joined group:", response.data.id)
 
     track("group_joined", { has_description: !!response.data.description })
 
@@ -231,9 +293,9 @@ export const useLeaderboard = () => {
   }
 
   const createGame = async (groupId: string, name: string, gameType = "standard"): Promise<Game> => {
-    console.time("Create Game")
+    debugTime("Create Game")
     const response = await gameApi.createGame(groupId, name, gameType)
-    console.timeEnd("Create Game")
+    debugTimeEnd("Create Game")
     if (!response.success || !response.data) {
       track("error_occurred", { error_type: "create_game_failed", error_message: response.error ?? "Unknown error" })
       throw new Error(response.error || "Failed to create game")
@@ -251,18 +313,18 @@ export const useLeaderboard = () => {
     date?: string,
     roundCount?: number,
   ): Promise<Playthrough> => {
-    console.time("Add Playthrough")
-    console.log("Adding playthrough for game:", gameId, "with results:", results, "date:", date)
+    debugTime("Add Playthrough")
+    debugLog("Adding playthrough for game:", gameId, "with results:", results, "date:", date)
 
     const response = await playthroughApi.createPlaythrough(gameId, results, date, roundCount)
-    console.timeEnd("Add Playthrough")
+    debugTimeEnd("Add Playthrough")
 
     if (!response.success || !response.data) {
       track("error_occurred", { error_type: "add_playthrough_failed", error_message: response.error ?? "Unknown error" })
       throw new Error(response.error || "Failed to create playthrough")
     }
 
-    console.log("Playthrough created successfully:", response.data)
+    debugLog("Playthrough created successfully:", response.data)
 
     track("playthrough_added", { player_count: results.length, has_game: !!gameId })
 
@@ -286,29 +348,35 @@ export const useLeaderboard = () => {
     date?: string,
     roundCount?: number,
   ): Promise<void> => {
-    console.time("Update Playthrough")
-    console.log("Updating playthrough:", playthroughId, "with results:", results, "date:", date)
+    debugTime("Update Playthrough")
+    debugLog("Updating playthrough:", playthroughId, "with results:", results, "date:", date)
 
     const response = await playthroughApi.updatePlaythrough(gameId, playthroughId, results, date, roundCount)
-    console.timeEnd("Update Playthrough")
+    debugTimeEnd("Update Playthrough")
 
     if (!response.success) {
       track("error_occurred", { error_type: "update_playthrough_failed", error_message: response.error ?? "Unknown error" })
       throw new Error(response.error || "Failed to update playthrough")
     }
 
-    console.log("Playthrough updated successfully:", response.data)
+    debugLog("Playthrough updated successfully:", response.data)
 
     track("playthrough_updated", { player_count: results.length, has_game: !!gameId })
 
-    await loadPlaythroughsForGame(gameId)
+    if (response.data?.id) {
+      setPlaythroughs((prev) =>
+        prev.map((playthrough) => (playthrough.id === playthroughId ? { ...playthrough, ...response.data } : playthrough)),
+      )
+    } else {
+      await loadPlaythroughsForGame(gameId)
+    }
   }
 
   const deletePlaythrough = async (gameId: string, playthroughId: string): Promise<boolean> => {
     try {
-      console.time("Delete Playthrough")
+      debugTime("Delete Playthrough")
       const response = await playthroughApi.deletePlaythrough(gameId, playthroughId)
-      console.timeEnd("Delete Playthrough")
+      debugTimeEnd("Delete Playthrough")
 
       if (!response.success) {
         track("error_occurred", { error_type: "delete_playthrough_failed", error_message: response.error ?? "Unknown error" })
@@ -335,9 +403,9 @@ export const useLeaderboard = () => {
   const concludeSeason = async (): Promise<void> => {
     if (!selectedGroupId || !selectedGameId) throw new Error("No group or game selected")
 
-    console.time("Conclude Season")
+    debugTime("Conclude Season")
     const response = await seasonApi.concludeSeason(selectedGroupId)
-    console.timeEnd("Conclude Season")
+    debugTimeEnd("Conclude Season")
 
     if (!response.success) {
       track("error_occurred", { error_type: "conclude_season_failed", error_message: response.error ?? "Unknown error" })
@@ -370,7 +438,7 @@ export const useLeaderboard = () => {
 
   const leaveGroup = (groupId: string) => {
     groupStorage.removeGroupCode(groupId)
-    console.log("Removed group code for group:", groupId)
+    debugLog("Removed group code for group:", groupId)
 
     if (selectedGroupId === groupId) {
       setSelectedGroupId(null)
@@ -388,26 +456,26 @@ export const useLeaderboard = () => {
 
       // Filter playthroughs by current season if available
       let gamePlaythroughs = playthroughs.filter((p) => p.game_id === gameId)
-      console.log("All game playthroughs:", gamePlaythroughs)
-      console.log("Current season summary:", currentSeasonSummary)
+      debugLog("All game playthroughs:", gamePlaythroughs)
+      debugLog("Current season summary:", currentSeasonSummary)
 
       // If we have current season data, only show playthroughs from current season
       if (currentSeasonSummary?.season) {
         const beforeFilter = gamePlaythroughs.length
-        console.log("Frontend season ID:", currentSeasonSummary.season.id)
-        console.log(
+        debugLog("Frontend season ID:", currentSeasonSummary.season.id)
+        debugLog(
           "Playthrough season IDs:",
           gamePlaythroughs.map((p) => p.season_id),
         )
         gamePlaythroughs = gamePlaythroughs.filter((p) => p.season_id === currentSeasonSummary.season.id)
-        console.log(
+        debugLog(
           `Filtered playthroughs for current season ${currentSeasonSummary.season.season_number}:`,
           `${beforeFilter} -> ${gamePlaythroughs.length}`,
           gamePlaythroughs.map((p) => ({ id: p.id, season_id: p.season_id, expected: currentSeasonSummary.season.id })),
         )
       }
 
-      console.log("Game playthroughs for leaderboard:", gamePlaythroughs)
+      debugLog("Game playthroughs for leaderboard:", gamePlaythroughs)
 
       const playerStats: Record<
         string,
@@ -489,9 +557,43 @@ export const useLeaderboard = () => {
     [groups, games, players, playthroughs],
   )
 
-  const currentLeaderboard = getLeaderboardForGame(selectedGameId)
-  const currentGroupOverview = getGroupOverview(selectedGroupId)
-  const currentGroupPlayers = selectedGroupId ? players.filter((p) => p.group_id === selectedGroupId) : []
+  const currentLeaderboard = useMemo(
+    () => getLeaderboardForGame(selectedGameId),
+    [getLeaderboardForGame, selectedGameId],
+  )
+  const currentSeasonSummaryForDisplay = useMemo(() => {
+    if (!currentSeasonSummary) return null
+
+    const totalPlaythroughs =
+      currentSeasonSummary.totalPlaythroughs ??
+      currentSeasonSummary.season.total_playthroughs ??
+      playthroughs.filter((playthrough) => playthrough.season_id === currentSeasonSummary.season.id).length
+    const topPlayers =
+      currentSeasonSummary.topPlayers?.length > 0
+        ? currentSeasonSummary.topPlayers
+        : buildSeasonTopPlayers(currentLeaderboard?.rankings)
+
+    return {
+      ...currentSeasonSummary,
+      season: {
+        ...currentSeasonSummary.season,
+        total_playthroughs: totalPlaythroughs,
+      },
+      totalPlaythroughs,
+      topPlayers,
+      playerStats: currentSeasonSummary.playerStats?.length ? currentSeasonSummary.playerStats : topPlayers,
+      canConclude: totalPlaythroughs >= Number(currentSeasonSummary.season.min_games_threshold ?? 10),
+    }
+  }, [currentSeasonSummary, currentLeaderboard, playthroughs])
+
+  const currentGroupOverview = useMemo(
+    () => getGroupOverview(selectedGroupId),
+    [getGroupOverview, selectedGroupId],
+  )
+  const currentGroupPlayers = useMemo(
+    () => (selectedGroupId ? players.filter((p) => p.group_id === selectedGroupId) : []),
+    [players, selectedGroupId],
+  )
 
   return {
     // State
@@ -504,7 +606,7 @@ export const useLeaderboard = () => {
     playthroughLoading,
     seasonLoading,
     playthroughs,
-    currentSeasonSummary,
+    currentSeasonSummary: currentSeasonSummaryForDisplay,
 
     // Computed
     currentLeaderboard,
@@ -524,5 +626,6 @@ export const useLeaderboard = () => {
     concludeSeason,
     fetchSeasons,
     fetchSeasonBadges,
+    loadFullPlaythrough,
   }
 }

@@ -24,6 +24,7 @@ interface LeaderboardViewProps {
   onConcludeSeason: () => Promise<void>
   onFetchSeasons: (groupId: string) => Promise<any[]>
   onFetchSeasonBadges: (groupId: string, seasonId: string) => Promise<any[]>
+  onLoadPlaythrough?: (gameId: string, playthroughId: string) => Promise<any>
   loading?: boolean
   playthroughLoading?: boolean
   seasonLoading?: boolean
@@ -41,6 +42,7 @@ export const LeaderboardView = ({
   onConcludeSeason,
   onFetchSeasons,
   onFetchSeasonBadges,
+  onLoadPlaythrough,
   loading = false,
   playthroughLoading = false,
   seasonLoading = false,
@@ -199,23 +201,17 @@ export const LeaderboardView = ({
         </TabsContent>
 
         <TabsContent value="history">
-          {seasonLoading ? (
-            <div className="text-center py-16">
-              <Spinner size="lg" className="mx-auto mb-4" />
-              <p className="text-muted-foreground">Loading season data...</p>
-            </div>
-          ) : (
-            <PlaythroughHistory
-              playthroughs={playthroughs}
-              gameId={game.id}
-              existingPlayers={existingPlayers}
-              currentSeasonId={currentSeasonSummary?.season.id}
-              gameType={game.game_type}
-              onDeletePlaythrough={handleDeletePlaythrough}
-              onUpdatePlaythrough={handleUpdatePlaythrough}
-              loading={playthroughLoading}
-            />
-          )}
+          <PlaythroughHistory
+            playthroughs={playthroughs}
+            gameId={game.id}
+            existingPlayers={existingPlayers}
+            currentSeasonId={currentSeasonSummary?.season.id}
+            gameType={game.game_type}
+            onDeletePlaythrough={handleDeletePlaythrough}
+            onUpdatePlaythrough={handleUpdatePlaythrough}
+            onLoadPlaythrough={onLoadPlaythrough}
+            loading={playthroughLoading}
+          />
         </TabsContent>
 
         <TabsContent value="seasons">

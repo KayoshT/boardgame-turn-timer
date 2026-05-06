@@ -129,65 +129,102 @@ export async function replacePlaythroughResultItems(args: {
   const { playthroughId, playthroughResultId, playerId } = args
   const items = args.items ?? args.acquisitions ?? []
 
+  const normalisedItems = items
+    .map((item) => normaliseAcquisitionInput(item as unknown as Row))
+    .filter((item): item is PlaythroughResultTrackedItemInput => item !== null)
+
   await sql`
     DELETE FROM playthrough_result_items
     WHERE playthrough_result_id = ${playthroughResultId}
   `
 
-  for (const item of items) {
-    const normalised = normaliseAcquisitionInput(item as unknown as Row)
-    if (!normalised) continue
+  if (normalisedItems.length === 0) return
 
-    await sql`
-      INSERT INTO playthrough_result_items (
-        playthrough_id,
-        playthrough_result_id,
-        player_id,
-        item_key,
-        item_name,
-        item_type,
-        deck_id,
-        source,
-        acquisition_count,
-        item_status,
-        vp_count,
-        strength_count,
-        entry_source,
-        acquisition_method,
-        notes
-      )
-      VALUES (
-        ${playthroughId},
-        ${playthroughResultId},
-        ${playerId ?? null},
-        ${normalised.itemKey},
-        ${normalised.itemName},
-        ${normalised.itemType},
-        ${normalised.deckId},
-        ${normalised.source ?? null},
-        ${normalised.acquisitionCount},
-        ${normalised.itemStatus ?? normalised.item_status ?? null},
-        ${normalised.vpCount ?? normalised.vp_count ?? 0},
-        ${normalised.strengthCount ?? normalised.strength_count ?? 0},
-        ${normalised.entrySource ?? normalised.entry_source ?? null},
-        ${normalised.acquisitionMethod ?? null},
-        ${normalised.notes ?? null}
-      )
-      ON CONFLICT (playthrough_result_id, item_key)
-      DO UPDATE SET
-        item_name = EXCLUDED.item_name,
-        item_type = EXCLUDED.item_type,
-        deck_id = EXCLUDED.deck_id,
-        source = EXCLUDED.source,
-        acquisition_count = EXCLUDED.acquisition_count,
-        item_status = EXCLUDED.item_status,
-        vp_count = EXCLUDED.vp_count,
-        strength_count = EXCLUDED.strength_count,
-        entry_source = EXCLUDED.entry_source,
-        acquisition_method = EXCLUDED.acquisition_method,
-        notes = EXCLUDED.notes
-    `
-  }
+  const payload = JSON.stringify(
+    normalisedItems.map((item) => ({
+      playthrough_id: playthroughId,
+      playthrough_result_id: playthroughResultId,
+      player_id: playerId ?? null,
+      item_key: item.itemKey,
+      item_name: item.itemName,
+      item_type: item.itemType,
+      deck_id: item.deckId,
+      source: item.source ?? null,
+      acquisition_count: item.acquisitionCount,
+      item_status: item.itemStatus ?? item.item_status ?? null,
+      vp_count: item.vpCount ?? item.vp_count ?? 0,
+      strength_count: item.strengthCount ?? item.strength_count ?? 0,
+      entry_source: item.entrySource ?? item.entry_source ?? null,
+      acquisition_method: item.acquisitionMethod ?? null,
+      notes: item.notes ?? null,
+    })),
+  )
+
+  await sql`
+    INSERT INTO playthrough_result_items (
+      playthrough_id,
+      playthrough_result_id,
+      player_id,
+      item_key,
+      item_name,
+      item_type,
+      deck_id,
+      source,
+      acquisition_count,
+      item_status,
+      vp_count,
+      strength_count,
+      entry_source,
+      acquisition_method,
+      notes
+    )
+    SELECT
+      item.playthrough_id::uuid,
+      item.playthrough_result_id::uuid,
+      NULLIF(item.player_id, '')::uuid,
+      item.item_key,
+      item.item_name,
+      item.item_type,
+      item.deck_id,
+      item.source,
+      item.acquisition_count,
+      item.item_status,
+      item.vp_count,
+      item.strength_count,
+      item.entry_source,
+      item.acquisition_method,
+      item.notes
+    FROM jsonb_to_recordset(${payload}::jsonb) AS item(
+      playthrough_id text,
+      playthrough_result_id text,
+      player_id text,
+      item_key text,
+      item_name text,
+      item_type text,
+      deck_id text,
+      source text,
+      acquisition_count integer,
+      item_status text,
+      vp_count integer,
+      strength_count integer,
+      entry_source text,
+      acquisition_method text,
+      notes text
+    )
+    ON CONFLICT (playthrough_result_id, item_key)
+    DO UPDATE SET
+      item_name = EXCLUDED.item_name,
+      item_type = EXCLUDED.item_type,
+      deck_id = EXCLUDED.deck_id,
+      source = EXCLUDED.source,
+      acquisition_count = EXCLUDED.acquisition_count,
+      item_status = EXCLUDED.item_status,
+      vp_count = EXCLUDED.vp_count,
+      strength_count = EXCLUDED.strength_count,
+      entry_source = EXCLUDED.entry_source,
+      acquisition_method = EXCLUDED.acquisition_method,
+      notes = EXCLUDED.notes
+  `
 }
 
 export async function replacePlaythroughResultAcquisitions(args: {
@@ -202,6 +239,111 @@ export async function replacePlaythroughResultAcquisitions(args: {
     playerId: args.playerId,
     items: args.acquisitions,
   })
+}
+
+export async function replacePlaythroughResultItemsForResults(args: {
+  playthroughId: string
+  results: Array<{
+    playthroughResultId: string
+    playerId?: string | null
+    items?: PlaythroughResultTrackedItemInput[]
+    acquisitions?: PlaythroughResultAcquisitionInput[]
+  }>
+}): Promise<void> {
+  const rows = args.results.flatMap((result) => {
+    const items = result.items ?? result.acquisitions ?? []
+
+    return items
+      .map((item) => normaliseAcquisitionInput(item as unknown as Row))
+      .filter((item): item is PlaythroughResultTrackedItemInput => item !== null)
+      .map((item) => ({
+        playthrough_id: args.playthroughId,
+        playthrough_result_id: result.playthroughResultId,
+        player_id: result.playerId ?? null,
+        item_key: item.itemKey,
+        item_name: item.itemName,
+        item_type: item.itemType,
+        deck_id: item.deckId,
+        source: item.source ?? null,
+        acquisition_count: item.acquisitionCount,
+        item_status: item.itemStatus ?? item.item_status ?? null,
+        vp_count: item.vpCount ?? item.vp_count ?? 0,
+        strength_count: item.strengthCount ?? item.strength_count ?? 0,
+        entry_source: item.entrySource ?? item.entry_source ?? null,
+        acquisition_method: item.acquisitionMethod ?? null,
+        notes: item.notes ?? null,
+      }))
+  })
+
+  if (rows.length === 0) return
+
+  const payload = JSON.stringify(rows)
+
+  await sql`
+    INSERT INTO playthrough_result_items (
+      playthrough_id,
+      playthrough_result_id,
+      player_id,
+      item_key,
+      item_name,
+      item_type,
+      deck_id,
+      source,
+      acquisition_count,
+      item_status,
+      vp_count,
+      strength_count,
+      entry_source,
+      acquisition_method,
+      notes
+    )
+    SELECT
+      item.playthrough_id::uuid,
+      item.playthrough_result_id::uuid,
+      NULLIF(item.player_id, '')::uuid,
+      item.item_key,
+      item.item_name,
+      item.item_type,
+      item.deck_id,
+      item.source,
+      item.acquisition_count,
+      item.item_status,
+      item.vp_count,
+      item.strength_count,
+      item.entry_source,
+      item.acquisition_method,
+      item.notes
+    FROM jsonb_to_recordset(${payload}::jsonb) AS item(
+      playthrough_id text,
+      playthrough_result_id text,
+      player_id text,
+      item_key text,
+      item_name text,
+      item_type text,
+      deck_id text,
+      source text,
+      acquisition_count integer,
+      item_status text,
+      vp_count integer,
+      strength_count integer,
+      entry_source text,
+      acquisition_method text,
+      notes text
+    )
+    ON CONFLICT (playthrough_result_id, item_key)
+    DO UPDATE SET
+      item_name = EXCLUDED.item_name,
+      item_type = EXCLUDED.item_type,
+      deck_id = EXCLUDED.deck_id,
+      source = EXCLUDED.source,
+      acquisition_count = EXCLUDED.acquisition_count,
+      item_status = EXCLUDED.item_status,
+      vp_count = EXCLUDED.vp_count,
+      strength_count = EXCLUDED.strength_count,
+      entry_source = EXCLUDED.entry_source,
+      acquisition_method = EXCLUDED.acquisition_method,
+      notes = EXCLUDED.notes
+  `
 }
 
 export async function fetchPlaythroughResultItemsByPlaythroughId(
@@ -235,10 +377,10 @@ export async function fetchPlaythroughResultAcquisitionsByPlaythroughId(
   return fetchPlaythroughResultItemsByPlaythroughId(playthroughId)
 }
 
-export async function attachTrackedItemsToPlaythrough<T extends PlaythroughWithResults>(playthrough: T | null): Promise<T | null> {
-  if (!playthrough?.id) return playthrough
-
-  const byResultId = await fetchPlaythroughResultItemsByPlaythroughId(playthrough.id)
+function attachTrackedItemsFromMap<T extends PlaythroughWithResults>(
+  playthrough: T,
+  byResultId: Map<string, PlaythroughResultTrackedItem[]>,
+): T {
   const results = parseResults(playthrough.results)
 
   return {
@@ -260,19 +402,59 @@ export async function attachTrackedItemsToPlaythrough<T extends PlaythroughWithR
   }
 }
 
+export const insertPlaythroughResultItemsForResults = replacePlaythroughResultItemsForResults
+
+export async function attachTrackedItemsToPlaythrough<T extends PlaythroughWithResults>(playthrough: T | null): Promise<T | null> {
+  if (!playthrough?.id) return playthrough
+
+  const byResultId = await fetchPlaythroughResultItemsByPlaythroughId(playthrough.id)
+  return attachTrackedItemsFromMap(playthrough, byResultId)
+}
+
 export async function attachAcquisitionsToPlaythrough<T extends PlaythroughWithResults>(playthrough: T | null): Promise<T | null> {
   return attachTrackedItemsToPlaythrough(playthrough)
 }
 
-export async function attachTrackedItemsToPlaythroughs<T extends PlaythroughWithResults>(playthroughs: T[]): Promise<T[]> {
-  const next: T[] = []
+export async function fetchPlaythroughResultItemsByPlaythroughIds(
+  playthroughIds: string[],
+): Promise<Map<string, Map<string, PlaythroughResultTrackedItem[]>>> {
+  const uniquePlaythroughIds = [...new Set(playthroughIds.filter(Boolean))]
+  const byPlaythroughId = new Map<string, Map<string, PlaythroughResultTrackedItem[]>>()
 
-  for (const playthrough of playthroughs) {
-    const hydrated = await attachTrackedItemsToPlaythrough(playthrough)
-    if (hydrated) next.push(hydrated)
+  if (uniquePlaythroughIds.length === 0) return byPlaythroughId
+
+  const rows = await sql`
+    SELECT *
+    FROM playthrough_result_items
+    WHERE playthrough_id = ANY(${uniquePlaythroughIds}::uuid[])
+    ORDER BY playthrough_id, deck_id, item_name, item_key
+  `
+
+  for (const row of rows) {
+    const item = mapTrackedItemRow(row)
+    const playthroughId = item.playthroughId
+    const resultId = item.playthroughResultId
+    if (!playthroughId || !resultId) continue
+
+    const byResultId = byPlaythroughId.get(playthroughId) ?? new Map<string, PlaythroughResultTrackedItem[]>()
+    const resultItems = byResultId.get(resultId) ?? []
+    resultItems.push(item)
+    byResultId.set(resultId, resultItems)
+    byPlaythroughId.set(playthroughId, byResultId)
   }
 
-  return next
+  return byPlaythroughId
+}
+export async function attachTrackedItemsToPlaythroughs<T extends PlaythroughWithResults>(playthroughs: T[]): Promise<T[]> {
+  const byPlaythroughId = await fetchPlaythroughResultItemsByPlaythroughIds(
+    playthroughs
+      .map((playthrough) => playthrough.id)
+      .filter((id): id is string => typeof id === "string" && id.length > 0),
+  )
+
+  return playthroughs.map((playthrough) =>
+    attachTrackedItemsFromMap(playthrough, byPlaythroughId.get(playthrough.id ?? "") ?? new Map()),
+  )
 }
 
 export async function attachAcquisitionsToPlaythroughs<T extends PlaythroughWithResults>(playthroughs: T[]): Promise<T[]> {
