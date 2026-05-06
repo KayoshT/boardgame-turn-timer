@@ -57,6 +57,7 @@ export default function DuneImperiumTimer() {
         addPlayerTurn,
         removePlayerTurn,
         undoLastAction,
+        skipToRoundWrapUp,
         endRound,
         resetGame,
         adjustPlayerTime,
@@ -129,7 +130,13 @@ export default function DuneImperiumTimer() {
     useKeyboardShortcuts({
         onNextTurn: nextTurn,
         onToggleTimer: startPauseTimer,
-        onUndo: undoLastAction,
+        onUndo: () => {
+            if (showPlaythroughLog) {
+                setShowPlaythroughLog(false)
+                return
+            }
+            undoLastAction()
+        },
         gameStarted,
     })
 
@@ -201,6 +208,20 @@ export default function DuneImperiumTimer() {
         })
     }
 
+
+    const handleUndo = () => {
+        if (showPlaythroughLog) {
+            setShowPlaythroughLog(false)
+            toast.message("Returned to round wrap-up")
+            return
+        }
+        undoLastAction()
+    }
+
+    const handleResetTimer = () => {
+        setShowPlaythroughLog(false)
+        resetGame()
+    }
 
     const handleFinishGameAndLog = () => {
         setShowPlaythroughLog(true)
@@ -309,11 +330,11 @@ export default function DuneImperiumTimer() {
                         onStartPause={startPauseTimer}
                         onNextTurn={nextTurn}
                         onStartReveal={startRevealTurn}
-                        canUndo={canUndo}
-                        onUndo={undoLastAction}
-                        onEndRound={endRound}
+                        canUndo={canUndo || showPlaythroughLog}
+                        onUndo={handleUndo}
+                        onEndRound={skipToRoundWrapUp}
                         onFinishGameAndLog={handleFinishGameAndLog}
-                        onReset={resetGame}
+                        onReset={handleResetTimer}
                         onToggleSettings={() => setShowSettings(!showSettings)}
                         roomCode={roomCode}
                     />

@@ -854,6 +854,38 @@ export const useGameTimer = () => {
         triggerSync()
     }
 
+    const skipToRoundWrapUp = () => {
+        if (!gameStarted || roundPhase === "round-wrap-up") return
+
+        pushUndoSnapshot()
+        const elapsed = getCurrentTurnTime()
+
+        setPlayers((prev) =>
+            prev.map((player) => {
+                const frozenPlayer = player.isActive
+                    ? {
+                          ...player,
+                          timeRemaining: getLiveTurnTimeRemaining(
+                              player,
+                              elapsed,
+                          ),
+                      }
+                    : player
+
+                return {
+                    ...frozenPlayer,
+                    isActive: false,
+                    isRevealing: false,
+                    isOutOfRound: true,
+                    agentTurnsTaken: getAgentTurnLimit(frozenPlayer),
+                    currentTurnEfficiency: 0,
+                }
+            }),
+        )
+        enterRoundWrapUp()
+        triggerSync()
+    }
+
     const endRound = () => {
         pushUndoSnapshot()
         sounds.playRoundEnd()
@@ -1161,6 +1193,7 @@ export const useGameTimer = () => {
         addPlayerTurn,
         removePlayerTurn,
         undoLastAction,
+        skipToRoundWrapUp,
         endRound,
         resetGame,
         adjustPlayerTime,

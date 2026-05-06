@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import type { TimerPhase } from "@/types"
 import { Play, Pause, RotateCcw, Settings, Trophy, Undo2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -25,6 +26,8 @@ interface ControlPanelProps {
     onToggleSettings: () => void
 }
 
+type PendingConfirmation = "skip-wrap-up" | "finish-log" | "reset" | null
+
 export const ControlPanel = ({
     isRunning,
     gameStarted,
@@ -47,6 +50,56 @@ export const ControlPanel = ({
     const nextActionLabel = isRoundWrapUp
         ? `Start Round ${currentRound + 1}`
         : "Next Turn"
+
+    const [pendingConfirmation, setPendingConfirmation] =
+        useState<PendingConfirmation>(null)
+
+    const requestConfirmation = (
+        confirmation: Exclude<PendingConfirmation, null>,
+    ) => {
+        if (confirmation === "reset" && !gameStarted) {
+            onReset()
+            return
+        }
+        setPendingConfirmation(confirmation)
+    }
+
+    const confirmation = (() => {
+        if (pendingConfirmation === "skip-wrap-up") {
+            return {
+                title: "Skip remaining turns?",
+                body: "This moves the timer to Combat & Cleanup. Use this only when you want to abandon the remaining Agent/Reveal turns for this round.",
+                confirmLabel: "Skip to Wrap-Up",
+                confirmClass:
+                    "border-amber-600 bg-amber-600 text-white hover:bg-amber-700",
+                onConfirm: onEndRound,
+            }
+        }
+
+        if (pendingConfirmation === "finish-log") {
+            return {
+                title: "Finish game and log it?",
+                body: "This opens the playthrough log form. Undo will hide the form and return to the round wrap-up state.",
+                confirmLabel: "Finish & Log",
+                confirmClass:
+                    "border-amber-600 bg-amber-600 text-white hover:bg-amber-700",
+                onConfirm: onFinishGameAndLog,
+            }
+        }
+
+        if (pendingConfirmation === "reset") {
+            return {
+                title: "Reset timer?",
+                body: "This clears the current timer state and returns all players to a fresh game.",
+                confirmLabel: "Reset Timer",
+                confirmClass:
+                    "border-red-600 bg-red-600 text-white hover:bg-red-700",
+                onConfirm: onReset,
+            }
+        }
+
+        return null
+    })()
 
     return (
         <Card className="mb-8 border-2 border-amber-200 bg-gradient-to-r from-amber-100 to-orange-100 text-amber-950 dark:border-white/[0.08] dark:[background-image:none] dark:bg-zinc-900/75 dark:text-zinc-200 dark:shadow-none">
@@ -99,7 +152,7 @@ export const ControlPanel = ({
 
                         {isRoundWrapUp && onFinishGameAndLog && (
                             <Button
-                                onClick={onFinishGameAndLog}
+                                onClick={() => requestConfirmation("finish-log")}
                                 disabled={!gameStarted}
                                 size="lg"
                                 variant="outline"
@@ -139,19 +192,19 @@ export const ControlPanel = ({
 
                         {!isRoundWrapUp && (
                             <Button
-                                onClick={onEndRound}
+                                onClick={() => requestConfirmation("skip-wrap-up")}
                                 disabled={!gameStarted}
                                 size="lg"
                                 variant="outline"
                                 className="border-green-600 text-green-700 hover:bg-green-50 px-6 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.06] dark:hover:text-white dark:disabled:border-zinc-800 dark:disabled:text-zinc-600 dark:disabled:bg-zinc-950/50 dark:disabled:opacity-100"
-                                title="Manually end the current round"
+                                title="Skip remaining turns and move to Combat & Cleanup"
                             >
-                                End Round
+                                Skip to Wrap-Up
                             </Button>
                         )}
 
                         <Button
-                            onClick={onReset}
+                            onClick={() => requestConfirmation("reset")}
                             size="lg"
                             variant="outline"
                             className="border-red-400 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-rose-500/15 dark:text-rose-300/70 dark:hover:bg-rose-950/20 dark:hover:text-rose-200/90"
@@ -182,6 +235,41 @@ export const ControlPanel = ({
                             </Button>
                         </JoinRoomModal>
                     </div>
+
+                    {confirmation && (
+                        <div className="mt-1 w-full max-w-2xl rounded-xl border border-amber-300 bg-white/85 p-4 text-left shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+                            <div className="font-semibold text-amber-950 dark:text-zinc-100">
+                                {confirmation.title}
+                            </div>
+                            <div className="mt-1 text-sm text-amber-800/80 dark:text-zinc-400">
+                                {confirmation.body}
+                            </div>
+                            <div className="mt-3 flex flex-wrap justify-end gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setPendingConfirmation(null)}
+                                    className="border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.06]"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        const action = confirmation.onConfirm
+                                        setPendingConfirmation(null)
+                                        action?.()
+                                    }}
+                                    className={confirmation.confirmClass}
+                                >
+                                    {confirmation.confirmLabel}
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="text-center mt-4 text-sm text-amber-700 dark:text-zinc-500 [&_strong]:dark:text-zinc-300">

@@ -76,9 +76,31 @@ add(
     "Playthrough logging is hidden until finish",
     page.includes("showPlaythroughLog &&") &&
         page.includes("handleFinishGameAndLog") &&
+        page.includes("setShowPlaythroughLog(false)") &&
+        page.includes("canUndo={canUndo || showPlaythroughLog}") &&
         controls.includes("Finish Game & Log") &&
         formSection.includes("defaultOpen"),
-    "The live timer should not show the log panel until the user deliberately finishes the game.",
+    "The live timer should not show the log panel until the user deliberately finishes the game, and Undo should hide it again.",
+)
+
+add(
+    "Manual skip pauses in wrap-up",
+    page.includes("onEndRound={skipToRoundWrapUp}") &&
+        controls.includes("Skip to Wrap-Up") &&
+        timerHook.includes("const skipToRoundWrapUp = () =>") &&
+        timerHook.includes("enterRoundWrapUp()") &&
+        timerHook.includes("isOutOfRound: true"),
+    "Skipping remaining turns should pause in Combat & Cleanup rather than starting the next round.",
+)
+
+add(
+    "Risky actions use inline confirmations",
+    controls.includes("pendingConfirmation") &&
+        controls.includes("Finish game and log it?") &&
+        controls.includes("Skip remaining turns?") &&
+        controls.includes("Reset timer?") &&
+        !controls.includes("window.confirm"),
+    "Finish, skip, and reset should use in-page confirmation instead of browser confirm dialogs.",
 )
 
 add(

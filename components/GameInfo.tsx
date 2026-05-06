@@ -15,7 +15,7 @@ export const GameInfo = () => {
                         <strong>Corrections:</strong> Use Undo to reverse the last turn change. Use Switch only for manual correction; it does not grant +1:00.
                     </p>
                     <p>
-                        <strong>Round Wrap-Up:</strong> After all players reveal, resolve Combat, Makers, and Recall before starting the next round.
+                        <strong>Round Wrap-Up:</strong> After all players reveal, resolve Combat, Makers, and Recall before starting the next round. Use Skip to Wrap-Up only when abandoning the remaining turns.
                     </p>
                     <p>
                         <strong>Turn Progress:</strong> The bar shows progress through the current timed minute. Overtime appears once the turn passes 60 seconds.
