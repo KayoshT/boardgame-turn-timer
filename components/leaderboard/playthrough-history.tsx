@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -59,9 +59,13 @@ export const PlaythroughHistory = ({
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [editingPlaythrough, setEditingPlaythrough] = useState<any | null>(null)
+  const [editingPlaythroughSummary, setEditingPlaythroughSummary] = useState<any | null>(null)
+  const [editLoadError, setEditLoadError] = useState<string | null>(null)
   const [expandedPlaythrough, setExpandedPlaythrough] = useState<string | null>(null)
   const [loadingPlaythroughId, setLoadingPlaythroughId] = useState<string | null>(null)
   const [fullPlaythroughsById, setFullPlaythroughsById] = useState<Record<string, any>>({})
+  const fullPlaythroughRequestsRef = useRef<Record<string, Promise<any> | undefined>>({})
+  const editRequestIdRef = useRef(0)
 
   const handleDelete = async () => {
     if (!confirmDeleteId) return
@@ -84,9 +88,23 @@ export const PlaythroughHistory = ({
     )
   }
 
-  const ensureFullPlaythrough = async (playthrough: any) => {
+  const ensureFullPlaythrough = async (playthrough: any, options: { showLoading?: boolean } = {}) => {
     const cached = fullPlaythroughsById[playthrough.id]
     if (cached) return cached
+
+    const showLoading = options.showLoading !== false
+    const existingRequest = fullPlaythroughRequestsRef.current[playthrough.id]
+
+    if (existingRequest) {
+      if (showLoading) setLoadingPlaythroughId(playthrough.id)
+      try {
+        return await existingRequest
+      } finally {
+        if (showLoading) {
+          setLoadingPlaythroughId((current) => (current === playthrough.id ? null : current))
+        }
+      }
+    }
 
     if (!onLoadPlaythrough || hasFullDetails(playthrough)) {
       const full = { ...playthrough, isSummary: false, hasFullDetails: true }
@@ -94,39 +112,73 @@ export const PlaythroughHistory = ({
       return full
     }
 
-    setLoadingPlaythroughId(playthrough.id)
-    try {
-      const loaded = await onLoadPlaythrough(gameId, playthrough.id)
+    if (showLoading) setLoadingPlaythroughId(playthrough.id)
+
+    const request = onLoadPlaythrough(gameId, playthrough.id).then((loaded) => {
       const full = { ...playthrough, ...loaded, game_type: gameType, isSummary: false, hasFullDetails: true }
       setFullPlaythroughsById((prev) => ({ ...prev, [playthrough.id]: full }))
       return full
+    })
+
+    fullPlaythroughRequestsRef.current[playthrough.id] = request
+
+    try {
+      return await request
     } finally {
-      setLoadingPlaythroughId(null)
+      delete fullPlaythroughRequestsRef.current[playthrough.id]
+      if (showLoading) {
+        setLoadingPlaythroughId((current) => (current === playthrough.id ? null : current))
+      }
     }
   }
 
+  const prefetchPlaythrough = (playthrough: any) => {
+    if (fullPlaythroughsById[playthrough.id] || fullPlaythroughRequestsRef.current[playthrough.id]) return
+    ensureFullPlaythrough(playthrough, { showLoading: false }).catch(() => {})
+  }
+
   const handleEdit = async (playthrough: any) => {
-    const fullPlaythrough = await ensureFullPlaythrough(playthrough)
-    const playthroughWithGameType = {
-      ...fullPlaythrough,
-      game_type: gameType,
+    const requestId = editRequestIdRef.current + 1
+    editRequestIdRef.current = requestId
+    setEditLoadError(null)
+    setEditingPlaythrough(null)
+    setEditingPlaythroughSummary({ ...playthrough, game_type: gameType })
+
+    try {
+      const fullPlaythrough = await ensureFullPlaythrough(playthrough)
+      if (editRequestIdRef.current !== requestId) return
+
+      setEditingPlaythrough({
+        ...fullPlaythrough,
+        game_type: gameType,
+      })
+    } catch (error) {
+      if (editRequestIdRef.current !== requestId) return
+      setEditLoadError(error instanceof Error ? error.message : "Failed to load playthrough details")
     }
-    setEditingPlaythrough(playthroughWithGameType)
   }
 
   const handleUpdatePlaythrough = async (results: any[], date?: string, roundCount?: number) => {
     if (!editingPlaythrough) return
-    await onUpdatePlaythrough(editingPlaythrough.id, results, date, roundCount)
+
+    const editedPlaythroughId = editingPlaythrough.id
+
+    await onUpdatePlaythrough(editedPlaythroughId, results, date, roundCount)
     setFullPlaythroughsById((prev) => {
       const next = { ...prev }
-      delete next[editingPlaythrough.id]
+      delete next[editedPlaythroughId]
       return next
     })
+    setEditingPlaythroughSummary(null)
+    setEditLoadError(null)
     setEditingPlaythrough(null)
   }
 
   const handleCancelEdit = () => {
+    editRequestIdRef.current += 1
     setEditingPlaythrough(null)
+    setEditingPlaythroughSummary(null)
+    setEditLoadError(null)
   }
 
   const toggleExpanded = async (playthrough: any) => {
@@ -175,6 +227,48 @@ export const PlaythroughHistory = ({
         onSubmit={handleUpdatePlaythrough}
         onCancel={handleCancelEdit}
       />
+    )
+  }
+
+  if (editingPlaythroughSummary) {
+    const timestamp = editingPlaythroughSummary.timestamp ? new Date(editingPlaythroughSummary.timestamp) : null
+
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Edit Playthrough</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
+            {editLoadError ? (
+              <>
+                <p className="text-sm font-medium text-slate-800">Could not load playthrough details.</p>
+                <p className="mt-1 text-sm text-muted-foreground">{editLoadError}</p>
+              </>
+            ) : (
+              <>
+                <Spinner size="sm" className="mx-auto mb-3" />
+                <p className="text-sm font-medium text-slate-800">Loading playthrough details...</p>
+                {timestamp && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {timestamp.toLocaleDateString()} at {timestamp.toLocaleTimeString([], { timeStyle: "short" })}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={handleCancelEdit}>
+              Cancel
+            </Button>
+            {editLoadError && (
+              <Button onClick={() => handleEdit(editingPlaythroughSummary)}>
+                Try Again
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     )
   }
 
@@ -232,6 +326,9 @@ export const PlaythroughHistory = ({
                 variant="ghost"
                 size="sm"
                 className="h-8 w-8 p-0 text-slate-500 hover:text-slate-700 hover:bg-slate-100"
+                onPointerEnter={() => prefetchPlaythrough(playthrough)}
+                onFocus={() => prefetchPlaythrough(playthrough)}
+                onPointerDown={() => prefetchPlaythrough(playthrough)}
                 onClick={() => toggleExpanded(playthrough)}
                 disabled={!!deletingId || isLoadingDetails}
               >
@@ -241,6 +338,9 @@ export const PlaythroughHistory = ({
                 variant="ghost"
                 size="sm"
                 className="h-8 w-8 p-0 text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                onPointerEnter={() => prefetchPlaythrough(playthrough)}
+                onFocus={() => prefetchPlaythrough(playthrough)}
+                onPointerDown={() => prefetchPlaythrough(playthrough)}
                 onClick={() => handleEdit(playthrough)}
                 disabled={!!deletingId || isLoadingDetails}
               >
@@ -271,6 +371,9 @@ export const PlaythroughHistory = ({
               variant="ghost"
               size="sm"
               className="text-xs text-slate-600 hover:text-slate-800 hover:bg-slate-100"
+              onPointerEnter={() => prefetchPlaythrough(playthrough)}
+              onFocus={() => prefetchPlaythrough(playthrough)}
+              onPointerDown={() => prefetchPlaythrough(playthrough)}
               onClick={() => toggleExpanded(playthrough)}
               disabled={isLoadingDetails}
             >
