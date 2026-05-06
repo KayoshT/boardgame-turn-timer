@@ -87,6 +87,15 @@ add(
     "The timer hook should preserve undo history and explicit turn-bonus state.",
 )
 
+add(
+    "Active clock adjustments update the turn baseline",
+    timerHook.includes("const activeElapsed = getCurrentTurnTime()") &&
+        timerHook.includes("const currentRemaining = getLiveTurnTimeRemaining(") &&
+        timerHook.includes("turnStartBank: nextTurnStartBank") &&
+        timerHook.includes("turnBonusAppliedThisTurn: nextBonus"),
+    "Adjusting the active player's time should not be overwritten by the next live timer tick.",
+)
+
 const failed = checks.filter((check) => !check.condition)
 
 if (failed.length > 0) {

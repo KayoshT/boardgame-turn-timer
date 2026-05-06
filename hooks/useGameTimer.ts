@@ -960,18 +960,42 @@ export const useGameTimer = () => {
 
     const adjustPlayerTime = (playerId: number, adjustment: number) => {
         pushUndoSnapshot()
+        const activeElapsed = getCurrentTurnTime()
+
         setPlayers((prev) =>
-            prev.map((player) =>
-                player.id === playerId
-                    ? {
-                          ...player,
-                          timeRemaining: Math.max(
-                              0,
-                              player.timeRemaining + adjustment,
-                          ),
-                      }
-                    : player,
-            ),
+            prev.map((player) => {
+                if (player.id !== playerId) return player
+
+                if (!player.isActive) {
+                    return {
+                        ...player,
+                        timeRemaining: Math.max(
+                            0,
+                            player.timeRemaining + adjustment,
+                        ),
+                    }
+                }
+
+                const currentRemaining = getLiveTurnTimeRemaining(
+                    player,
+                    activeElapsed,
+                )
+                const nextRemaining = Math.max(0, currentRemaining + adjustment)
+                const nextTurnTotal = nextRemaining + activeElapsed
+                const currentBonus = Math.max(
+                    0,
+                    Number(player.turnBonusAppliedThisTurn ?? 0),
+                )
+                const nextBonus = Math.min(currentBonus, nextTurnTotal)
+                const nextTurnStartBank = Math.max(0, nextTurnTotal - nextBonus)
+
+                return {
+                    ...player,
+                    timeRemaining: nextRemaining,
+                    turnStartBank: nextTurnStartBank,
+                    turnBonusAppliedThisTurn: nextBonus,
+                }
+            }),
         )
         triggerSync()
     }
