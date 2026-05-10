@@ -2016,7 +2016,7 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
     const initialRanksWithStarters = initialRanks.map((result: PlayerRankInput) => withStarterDeckDefaults(result))
     const derivedInitialRanks = deriveResultSet(initialRanksWithStarters, { defaultBaseVp: initialRanksWithStarters.length === 4 ? 1 : 0 }) as PlayerRankInput[]
     setPlayerRanks(derivedInitialRanks)
-    setExpandedPlayerId((current) => current ?? derivedInitialRanks[0]?.id ?? null)
+    setExpandedPlayerId(null)
   }, [playthrough, existingPlayers])
 
   useEffect(() => {
