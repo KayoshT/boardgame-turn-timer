@@ -646,11 +646,41 @@ function syncVpSummaryField(
   const nextHasTrackedItems = hasVpTrackedAcquisitions(acquisitions, itemTypes)
   const previousSum = sumAcquisitionVp(previousAcquisitions, itemTypes)
   const nextSum = sumAcquisitionVp(acquisitions, itemTypes)
-
-  if (nextHasTrackedItems) return nextSum
-
+  const previous = validNumber(previousValue)
   const current = validNumber(currentValue)
-  if (previousHadTrackedItems && current === previousSum) return undefined
+
+  if (nextHasTrackedItems) {
+    if (typeof current !== "number") return nextSum
+
+    // If the summary was previously just the itemised subtotal, keep it synced.
+    // Otherwise preserve a manual total so partial itemisation becomes:
+    // total VP = itemised VP + unitemised VP.
+    if (
+      previousHadTrackedItems &&
+      typeof previous === "number" &&
+      previous === previousSum &&
+      current === previousSum &&
+      nextSum !== previousSum
+    ) {
+      return nextSum
+    }
+
+    // The itemised subtotal is a lower bound for the source total.
+    // Avoid impossible negative "not itemised" VP.
+    if (current < nextSum) return nextSum
+
+    return current
+  }
+
+  if (
+    previousHadTrackedItems &&
+    typeof previous === "number" &&
+    previous === previousSum &&
+    current === previousSum
+  ) {
+    return undefined
+  }
+
   return current
 }
 
