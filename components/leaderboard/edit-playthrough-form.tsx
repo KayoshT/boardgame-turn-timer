@@ -385,7 +385,7 @@ function getAcquisitionsFromResult(result: any): PlaythroughResultAcquisitionInp
     deckId: item.deckId ?? item.deck_id,
     source: item.source,
     acquisitionCount: getNumber(item, "acquisitionCount", "acquisition_count") ?? 1,
-    itemStatus: item.itemStatus ?? item.item_status ?? item.acquisitionMethod ?? item.acquisition_method,
+    itemStatus: item.itemStatus ?? item.item_status ?? undefined,
     vpCount: getNumber(item, "vpCount", "vp_count"),
     entrySource: item.entrySource ?? item.entry_source ?? "manual",
     notes: item.notes,
@@ -399,7 +399,7 @@ function acquisitionCount(item: PlaythroughResultAcquisitionInput): number {
 }
 
 function acquisitionStatus(item: PlaythroughResultAcquisitionInput): AcquisitionItemStatus | undefined {
-  return item.itemStatus ?? item.item_status ?? (item.acquisitionMethod as AcquisitionItemStatus | undefined)
+  return item.itemStatus ?? item.item_status ?? undefined
 }
 
 function hasAcquisitionType(items: PlaythroughResultAcquisitionInput[], itemType: AcquisitionItemType): boolean {

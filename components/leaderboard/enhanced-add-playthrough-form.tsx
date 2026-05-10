@@ -367,7 +367,7 @@ function acquisitionCount(item: PlaythroughResultAcquisitionInput): number {
 }
 
 function acquisitionStatus(item: PlaythroughResultAcquisitionInput): AcquisitionItemStatus | undefined {
-  return item.itemStatus ?? item.item_status ?? (item.acquisitionMethod as AcquisitionItemStatus | undefined)
+  return item.itemStatus ?? item.item_status ?? undefined
 }
 
 function hasAcquisitionType(items: PlaythroughResultAcquisitionInput[], itemType: AcquisitionItemType): boolean {
