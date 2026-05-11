@@ -1,7 +1,9 @@
 import inventoryJson from "@/data/dune_inventory.json"
 import {
+  ACQUISITION_ITEM_STATUSES,
   ACQUISITION_ITEM_TYPES,
   DUNE_ACQUISITION_DECK_IDS,
+  type AcquisitionItemStatus,
   type AcquisitionItemType,
   type AcquisitionPrintedCost,
   type BattleIcon,
@@ -77,6 +79,27 @@ function positiveInteger(value: unknown, fallback = 1): number {
 
   const integer = Math.trunc(number)
   return integer > 0 ? integer : fallback
+}
+
+function firstValidAcquisitionStatus(...values: unknown[]): AcquisitionItemStatus | null {
+  const text = firstText(...values)
+  if (!text) return null
+
+  return ACQUISITION_ITEM_STATUSES.includes(text as AcquisitionItemStatus) ? (text as AcquisitionItemStatus) : null
+}
+
+function firstValidEntrySource(...values: unknown[]): PlaythroughResultAcquisitionInput["entrySource"] | null {
+  const text = firstText(...values)
+  if (
+    text === "manual" ||
+    text === "auto" ||
+    text === "vp_source" ||
+    text === "strength_source"
+  ) {
+    return text
+  }
+
+  return null
 }
 
 function slugify(value: string): string {
@@ -423,10 +446,10 @@ export function normaliseAcquisitionInput(input: Record<string, unknown>): Playt
     acquisitionCount: positiveInteger(
       firstText(input.acquisitionCount, input.acquisition_count, input.count, input.acquisition_count),
     ),
-    itemStatus: firstText(input.itemStatus, input.item_status) as PlaythroughResultAcquisitionInput["itemStatus"],
+    itemStatus: firstValidAcquisitionStatus(input.itemStatus, input.item_status) ?? "not_set",
     vpCount: positiveInteger(firstText(input.vpCount, input.vp_count), 0),
     strengthCount: positiveInteger(firstText(input.strengthCount, input.strength_count), 0),
-    entrySource: firstText(input.entrySource, input.entry_source) as PlaythroughResultAcquisitionInput["entrySource"],
+    entrySource: firstValidEntrySource(input.entrySource, input.entry_source),
     acquisitionMethod: firstText(input.acquisitionMethod, input.acquisition_method, input.acquiredBy, input.acquired_by),
     notes: firstText(input.notes),
   }
