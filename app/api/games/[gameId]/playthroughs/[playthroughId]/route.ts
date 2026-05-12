@@ -524,11 +524,11 @@ function toResponseResult(row: any) {
   }
 }
 
-export async function GET(request: NextRequest, { params }: { params: { gameId: string; playthroughId: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ gameId: string; playthroughId: string }> }) {
   const timing = createServerTiming()
   try {
     const userId = getUserId(request)
-    const { gameId, playthroughId } = params
+    const { gameId, playthroughId } = await params
 
     const [game] = await sql`
       SELECT g.id, g.group_id
@@ -590,11 +590,11 @@ export async function GET(request: NextRequest, { params }: { params: { gameId: 
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { gameId: string; playthroughId: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ gameId: string; playthroughId: string }> }) {
   const timing = createServerTiming()
   try {
     const userId = getUserId(request)
-    const { gameId, playthroughId } = params
+    const { gameId, playthroughId } = await params
 
     const [game] = await sql`
       SELECT g.id, g.group_id
@@ -630,11 +630,11 @@ export async function DELETE(request: NextRequest, { params }: { params: { gameI
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { gameId: string; playthroughId: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ gameId: string; playthroughId: string }> }) {
   const timing = createServerTiming()
   try {
     const userId = getUserId(request)
-    const { gameId, playthroughId } = params
+    const { gameId, playthroughId } = await params
     const body = await request.json()
     const { results, date } = body
 

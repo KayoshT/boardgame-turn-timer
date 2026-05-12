@@ -191,10 +191,10 @@ async function getDuneReferenceData() {
   return { leaders, strategicArchetypes }
 }
 
-export async function GET(request: NextRequest, { params }: { params: { groupId: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ groupId: string }> }) {
   try {
     const userId = getUserId(request)
-    const { groupId } = params
+    const { groupId } = await params
     const requestedGameId = request.nextUrl.searchParams.get("gameId")
 
     const access = firstRow(

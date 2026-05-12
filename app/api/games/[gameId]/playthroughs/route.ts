@@ -655,10 +655,10 @@ async function fetchCompletePlaythrough(playthroughId: string) {
   return attachTrackedItemsToPlaythrough(firstRow(rows))
 }
 
-export async function GET(request: NextRequest, { params }: { params: { gameId: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ gameId: string }> }) {
   const timing = createServerTiming()
   try {
-    const { gameId } = params
+    const { gameId } = await params
     const includeDetails = ["1", "true", "full", "details"].includes(
       request.nextUrl.searchParams.get("includeDetails")?.toLowerCase() ?? "",
     )
@@ -752,11 +752,11 @@ export async function GET(request: NextRequest, { params }: { params: { gameId: 
   }
 }
 
-export async function POST(request: NextRequest, { params }: { params: { gameId: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ gameId: string }> }) {
   const timing = createServerTiming()
   try {
     const userId = getUserId(request)
-    const { gameId } = params
+    const { gameId } = await params
     const body = await request.json()
     const { results } = body
 

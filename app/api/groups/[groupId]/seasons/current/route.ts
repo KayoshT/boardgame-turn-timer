@@ -203,11 +203,11 @@ async function getSeasonPlayerStats(seasonId: string) {
   `
 }
 
-export async function GET(request: NextRequest, { params }: { params: { groupId: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ groupId: string }> }) {
   const timing = createServerTiming()
   try {
     const userId = getUserId(request)
-    const { groupId } = params
+    const { groupId } = await params
     const gameId = request.nextUrl.searchParams.get("gameId")
     const includeStats = request.nextUrl.searchParams.get("includeStats") === "true"
 
