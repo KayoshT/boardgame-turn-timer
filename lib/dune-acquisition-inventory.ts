@@ -255,6 +255,9 @@ function getCopyCount(deckId: DuneAcquisitionDeckId, item: InventoryItem): numbe
   return 1
 }
 
+function getCopyScope(item: InventoryItem): DuneAcquisitionOption["copyScope"] {
+  return item.CountPerPlayer !== undefined && item.Count === undefined ? "per_player" : "global"
+}
 
 function getConflictLevel(deckId: DuneAcquisitionDeckId, item: InventoryItem): number | null {
   if (deckId !== "Conflict") return null
@@ -316,6 +319,7 @@ function normaliseInventoryItem(deckId: DuneAcquisitionDeckId, item: InventoryIt
   const effectText = getEffectText(deckId, item)
   const vpAvailable = getVpAvailable(deckId, item, effectText)
   const copyCount = getCopyCount(deckId, item)
+  const copyScope = getCopyScope(item)
   const battleIcon = getBattleIcon(item)
   const conflictLevel = getConflictLevel(deckId, item)
 
@@ -352,6 +356,7 @@ function normaliseInventoryItem(deckId: DuneAcquisitionDeckId, item: InventoryIt
     description: effectText,
     vpAvailable,
     copyCount,
+    copyScope,
     conflictLevel,
     battleIcon,
     searchText,
