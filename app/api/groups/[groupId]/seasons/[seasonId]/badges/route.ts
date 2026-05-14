@@ -1,10 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql, getUserId } from "@/lib/db"
 
-export async function GET(request: NextRequest, { params }: { params: { groupId: string; seasonId: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ groupId: string; seasonId: string }> }) {
   try {
     const userId = getUserId(request)
-    const { groupId, seasonId } = params
+    const { groupId, seasonId } = await params
 
     // Verify user has access to this group
     const [access] = await sql`

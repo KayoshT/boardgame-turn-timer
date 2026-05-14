@@ -5,10 +5,10 @@ function firstRow<T>(rows: T[]): T | null {
   return rows[0] ?? null
 }
 
-export async function POST(request: NextRequest, { params }: { params: { groupId: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ groupId: string }> }) {
   try {
     const userId = getUserId(request)
-    const { groupId } = params
+    const { groupId } = await params
     let body: { gameId?: string } = {}
 
     try {
