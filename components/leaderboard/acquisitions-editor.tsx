@@ -310,7 +310,7 @@ function itemTypeLabel(itemType: AcquisitionItemType): string {
 }
 
 function itemBadgeClass(label: string): string {
-  if (/unsupported|over|unassigned/i.test(label)) return "border-amber-200 bg-amber-50 text-amber-700"
+  if (/unsupported|over|unassigned|not itemised/i.test(label)) return "border-amber-200 bg-amber-50 text-amber-700"
   if (/intrigue|used/i.test(label)) return "border-purple-200 bg-purple-50 text-purple-700"
   if (/wild/i.test(label)) return "border-yellow-200 bg-yellow-50 text-yellow-700"
   if (/matched/i.test(label)) return "border-emerald-200 bg-emerald-50 text-emerald-700"
@@ -653,12 +653,18 @@ export function AcquisitionsEditor({
           ? totalVp
           : totalCopies
   const manualSummaryCount = typeof summaryCount === "number" && Number.isFinite(summaryCount) ? Math.trunc(summaryCount) : undefined
+  const sourceTotalUnknown = manualSummaryCount === undefined && accountedCount > 0 && (
+    summaryMetric === "vp" ||
+    summaryMetric === "strength" ||
+    vpOnly ||
+    strengthOnly
+  )
   const unlistedCount = manualSummaryCount !== undefined ? Math.max(0, manualSummaryCount - accountedCount) : 0
   const overAccountedCount = manualSummaryCount !== undefined ? Math.max(0, accountedCount - manualSummaryCount) : 0
   const unlistedText = strengthOnly
-    ? `${unlistedCount} STR unassigned`
+    ? `${unlistedCount} STR not itemised`
     : vpOnly
-      ? `${unlistedCount} VP unassigned`
+      ? `${unlistedCount} VP not itemised`
       : `+${unlistedCount} ${unlistedLabel}`
   const overAccountedText = strengthOnly
     ? `${overAccountedCount} STR over`
@@ -871,7 +877,7 @@ export function AcquisitionsEditor({
   }
 
   return (
-    <div className="rounded-lg border bg-white/70 p-3">
+    <div className="rounded-lg border border-slate-200 bg-white/70 p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h6 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{title}</h6>
@@ -893,6 +899,11 @@ export function AcquisitionsEditor({
             {totalStrength > 0 && (
               <span className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 font-semibold text-rose-700">
                 +{totalStrength} STR
+              </span>
+            )}
+            {sourceTotalUnknown && (
+              <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 font-medium text-amber-700">
+                Total unset
               </span>
             )}
             {unlistedCount > 0 && (

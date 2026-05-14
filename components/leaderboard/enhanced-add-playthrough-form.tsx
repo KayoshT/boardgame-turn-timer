@@ -321,17 +321,33 @@ function syncConflictVpForFinalConflictChange<T extends Record<string, any>>(pre
   return updated
 }
 
+function itemisedVpMinimum(result: Record<string, any>, itemTypes: AcquisitionItemType[]): number {
+  return sumAcquisitionVp(result.acquisitions ?? [], itemTypes)
+}
+
+function effectiveVpSourceTotal(result: Record<string, any>, value: number | null | undefined, itemTypes: AcquisitionItemType[]): number {
+  return Math.max(numericValue(value), itemisedVpMinimum(result, itemTypes))
+}
+
+function effectiveIntrigueVpSourceTotal(result: Record<string, any>): number {
+  return Math.max(numericValue(result.vpSourcesIntrigueCards), sumSupportedIntrigueVp(result))
+}
+
 function calculateKnownVp(result: Record<string, any>): number {
   return (
     numericValue(result.vpSourcesBase) +
     calculateFactionVp(result) +
-    numericValue(result.vpSourcesConflictCards) +
+    effectiveVpSourceTotal(result, result.vpSourcesConflictCards, ["conflict_card"]) +
     numericValue(result.vpSourcesBattleIconMatches) +
     numericValue(result.vpSourcesSpiceMustFlow) +
-    numericValue(result.vpSourcesIntrigueCards) +
-    numericValue(result.vpSourcesTechTiles) +
-    numericValue(result.vpSourcesImperiumCards) +
-    numericValue(isSteersmanLeader(result) ? result.vpSourcesLeaderAbilities : undefined)
+    effectiveIntrigueVpSourceTotal(result) +
+    effectiveVpSourceTotal(result, result.vpSourcesTechTiles, ["tech_tile"]) +
+    effectiveVpSourceTotal(result, result.vpSourcesImperiumCards, ["imperium_card", "reserve_card", "starter_card"]) +
+    numericValue(
+      isSteersmanLeader(result)
+        ? Math.max(numericValue(result.vpSourcesLeaderAbilities), itemisedVpMinimum(result, ["navigation_card"]))
+        : undefined,
+    )
   )
 }
 
@@ -367,7 +383,7 @@ function acquisitionCount(item: PlaythroughResultAcquisitionInput): number {
 }
 
 function acquisitionStatus(item: PlaythroughResultAcquisitionInput): AcquisitionItemStatus | undefined {
-  return item.itemStatus ?? item.item_status ?? (item.acquisitionMethod as AcquisitionItemStatus | undefined)
+  return item.itemStatus ?? item.item_status ?? undefined
 }
 
 function hasAcquisitionType(items: PlaythroughResultAcquisitionInput[], itemType: AcquisitionItemType): boolean {
@@ -413,11 +429,23 @@ function syncSummaryCount(
   previousFloor: number,
   nextFloor: number,
 ): number | undefined {
+  void previousValue
+  void previousFloor
+  void nextFloor
+
+  // Count summaries are partial-record totals. Itemised rows are evidence,
+  // not proof that the full count is known.
+  return validNumber(currentValue)
+}
+
+function syncStrictSummaryCount(
+  currentValue: number | undefined,
+  previousValue: number | undefined,
+  previousFloor: number,
+  nextFloor: number,
+): number | undefined {
   const current = validNumber(currentValue)
 
-  // Treat the first itemised entry as a helpful default, but preserve explicit
-  // manual values afterwards. This lets a user keep a summary count unset or 0
-  // when they only itemised a partial record of the game.
   if (typeof current === "number") {
     if (previousFloor > 0 && current === previousFloor && nextFloor !== previousFloor) {
       return nextFloor > 0 ? nextFloor : undefined
@@ -549,9 +577,14 @@ function syncStrengthSummaryField(
   const previousSum = sumAcquisitionStrength(previousAcquisitions, itemTypes)
   const nextSum = sumAcquisitionStrength(acquisitions, itemTypes)
 
-  if (nextHasTrackedItems) return nextSum
-
   const current = validNumber(currentValue)
+
+  if (nextHasTrackedItems) {
+    // As with VP, itemised strength is a known minimum, not necessarily
+    // the complete source total.
+    return current
+  }
+
   if (previousHadTrackedItems && current === previousSum) return undefined
   return current
 }
@@ -635,6 +668,21 @@ function syncSpiceMustFlowAcquisitionFromVp(
   return [...withoutSmf, { ...base, acquisitionCount: count }]
 }
 
+function syncSpiceMustFlowForForm<T extends { acquisitions?: PlaythroughResultAcquisitionInput[] | null; vpSourcesSpiceMustFlow?: number }>(
+  result: T,
+): T {
+  const acquisitions = result.acquisitions ?? []
+  const summaryValue = validNumber(result.vpSourcesSpiceMustFlow)
+  const itemCount = countSpiceMustFlowAcquisitions(acquisitions)
+  const vpCount = typeof summaryValue === "number" ? summaryValue : itemCount > 0 ? itemCount : undefined
+
+  return {
+    ...result,
+    vpSourcesSpiceMustFlow: vpCount,
+    acquisitions: syncSpiceMustFlowAcquisitionFromVp(acquisitions, vpCount),
+  }
+}
+
 function syncVpSummaryField(
   previousAcquisitions: PlaythroughResultAcquisitionInput[],
   acquisitions: PlaythroughResultAcquisitionInput[],
@@ -646,11 +694,25 @@ function syncVpSummaryField(
   const nextHasTrackedItems = hasVpTrackedAcquisitions(acquisitions, itemTypes)
   const previousSum = sumAcquisitionVp(previousAcquisitions, itemTypes)
   const nextSum = sumAcquisitionVp(acquisitions, itemTypes)
-
-  if (nextHasTrackedItems) return nextSum
-
+  const previous = validNumber(previousValue)
   const current = validNumber(currentValue)
-  if (previousHadTrackedItems && current === previousSum) return undefined
+
+  if (nextHasTrackedItems) {
+    // Tracked items are evidence, not proof that the whole source total is known.
+    // Leave blank totals blank so partial itemisation can be represented as:
+    // itemised VP known, source total unknown.
+    return current
+  }
+
+  if (
+    previousHadTrackedItems &&
+    typeof previous === "number" &&
+    previous === previousSum &&
+    current === previousSum
+  ) {
+    return undefined
+  }
+
   return current
 }
 
@@ -664,23 +726,8 @@ function syncAcquisitionSummaryFields<T extends PlayerResult>(previous: PlayerRe
     acquisitionsChanged && (hasAcquisitionType(previousAcquisitions, itemType) || hasAcquisitionType(acquisitions, itemType))
 
   if (shouldSync("imperium_card") || shouldSync("reserve_card") || shouldSync("starter_card")) {
-    const previousTrashedFloor = countAcquisitionsForTypes(previousAcquisitions, ["imperium_card", "reserve_card", "starter_card"], ["trashed"])
-    const nextTrashedFloor = countAcquisitionsForTypes(acquisitions, ["imperium_card", "reserve_card", "starter_card"], ["trashed"])
-    next.cardsTrashedCount = syncSummaryCount(
-      next.cardsTrashedCount,
-      previous.cardsTrashedCount,
-      previousTrashedFloor,
-      nextTrashedFloor,
-    )
-
-    const previousDeckFloor = countAcquisitionsForTypes(previousAcquisitions, ["imperium_card", "reserve_card", "starter_card"], ["in_final_deck"])
-    const nextDeckFloor = countAcquisitionsForTypes(acquisitions, ["imperium_card", "reserve_card", "starter_card"], ["in_final_deck"])
-    next.finalDeckSize = syncSummaryCount(
-      next.finalDeckSize,
-      previous.finalDeckSize,
-      previousDeckFloor,
-      nextDeckFloor,
-    )
+    // Deck size and trashed count are summary totals, not safe to infer from
+    // partial itemised card records. Preserve unset/manual values.
   }
 
   if (shouldSync("contract")) {
@@ -833,7 +880,7 @@ function syncAcquisitionSummaryFields<T extends PlayerResult>(previous: PlayerRe
     const previousSmfCount = countSpiceMustFlowAcquisitions(previousAcquisitions)
     const nextSmfCount = countSpiceMustFlowAcquisitions(acquisitions)
     if (previousSmfCount > 0 || nextSmfCount > 0) {
-      next.vpSourcesSpiceMustFlow = syncSummaryCount(
+      next.vpSourcesSpiceMustFlow = syncStrictSummaryCount(
         next.vpSourcesSpiceMustFlow,
         previous.vpSourcesSpiceMustFlow,
         previousSmfCount,
@@ -915,13 +962,6 @@ function withStarterDeckDefaults<T extends Record<string, any>>(result: T): T {
   if (acquisitions === result.acquisitions) return result
 
   const next: Record<string, any> = { ...result, acquisitions }
-  if (isBlankValue(next.finalDeckSize)) {
-    next.finalDeckSize = countAcquisitionsForTypes(acquisitions, ["starter_card"], ["in_final_deck"])
-  }
-  if (isBlankValue(next.cardsTrashedCount)) {
-    next.cardsTrashedCount = countAcquisitionsForTypes(acquisitions, ["starter_card"], ["trashed"])
-  }
-
   return next as T
 }
 
@@ -1377,7 +1417,7 @@ function VpRail({ result, playerCount, action }: { result: Record<string, any>; 
       key: "conflict",
       label: "Conflict rewards",
       shortLabel: "CR",
-      count: positiveInt(result.vpSourcesConflictCards),
+      count: positiveInt(effectiveVpSourceTotal(result, result.vpSourcesConflictCards, ["conflict_card"])),
       className: "border-orange-300 bg-orange-50 text-orange-800",
       title: "Conflict reward VP",
     },
@@ -1401,7 +1441,7 @@ function VpRail({ result, playerCount, action }: { result: Record<string, any>; 
       key: "intrigue",
       label: "Intrigue",
       shortLabel: "I",
-      count: positiveInt(result.vpSourcesIntrigueCards),
+      count: positiveInt(effectiveIntrigueVpSourceTotal(result)),
       className: "border-purple-300 bg-purple-50 text-purple-800",
       title: "Intrigue card VP",
     },
@@ -1409,7 +1449,7 @@ function VpRail({ result, playerCount, action }: { result: Record<string, any>; 
       key: "tech",
       label: "Tech",
       shortLabel: "T",
-      count: positiveInt(result.vpSourcesTechTiles),
+      count: positiveInt(effectiveVpSourceTotal(result, result.vpSourcesTechTiles, ["tech_tile"])),
       className: "border-cyan-300 bg-cyan-50 text-cyan-800",
       title: "Tech tile VP",
     },
@@ -1417,7 +1457,7 @@ function VpRail({ result, playerCount, action }: { result: Record<string, any>; 
       key: "imperium",
       label: "Deck cards",
       shortLabel: "Deck",
-      count: positiveInt(result.vpSourcesImperiumCards),
+      count: positiveInt(effectiveVpSourceTotal(result, result.vpSourcesImperiumCards, ["imperium_card", "reserve_card", "starter_card"])),
       className: "border-blue-300 bg-blue-50 text-blue-800",
       title: "Imperium/Reserve card VP",
     },
@@ -1425,7 +1465,7 @@ function VpRail({ result, playerCount, action }: { result: Record<string, any>; 
       key: "leader",
       label: "Leader",
       shortLabel: "L",
-      count: positiveInt(isSteersmanLeader(result) ? result.vpSourcesLeaderAbilities : undefined),
+      count: positiveInt(isSteersmanLeader(result) ? Math.max(numericValue(result.vpSourcesLeaderAbilities), itemisedVpMinimum(result, ["navigation_card"])) : undefined),
       className: "border-indigo-300 bg-indigo-50 text-indigo-800",
       title: "Leader ability VP",
     },
@@ -1523,6 +1563,7 @@ function NumberField({
   lockedReason,
   widthClass = "max-w-48",
   resetValue,
+  reconcileWithTrackedItems = false,
 }: {
   id: string
   label?: string
@@ -1533,6 +1574,7 @@ function NumberField({
   lockedReason?: string
   widthClass?: string
   resetValue?: number
+  reconcileWithTrackedItems?: boolean
 }) {
   const isLocked = Boolean(lockedReason)
   const numericValue = typeof value === "number" && Number.isFinite(value) ? Math.trunc(value) : undefined
@@ -1587,6 +1629,7 @@ function NumberStepperField({
   max,
   lockedReason,
   resetValue,
+  reconcileWithTrackedItems = false,
 }: {
   id: string
   label?: string
@@ -1599,6 +1642,7 @@ function NumberStepperField({
   max?: number
   lockedReason?: string
   resetValue?: number
+  reconcileWithTrackedItems?: boolean
 }) {
   const safeMin = Math.max(0, Math.trunc(min))
   const isLocked = Boolean(lockedReason)
@@ -1608,6 +1652,29 @@ function NumberStepperField({
     ? Math.max(safeMin, Math.trunc(resetValue))
     : safeMin
   const isDirty = !isLocked && numericValue !== undefined && numericValue !== resetTarget
+  const itemisedMinimum = typeof resetValue === "number" && Number.isFinite(resetValue)
+    ? Math.max(safeMin, Math.trunc(resetValue))
+    : undefined
+  const hasItemisedEvidence = itemisedMinimum !== undefined && itemisedMinimum > safeMin
+  const canShowReconciliation = reconcileWithTrackedItems && !isLocked
+  const sourceTotalUnknown = canShowReconciliation && numericValue === undefined && hasItemisedEvidence
+  const itemisedExceedsTotal = canShowReconciliation && numericValue !== undefined && hasItemisedEvidence && numericValue < itemisedMinimum
+  const totalNotFullyItemised = canShowReconciliation && numericValue !== undefined && numericValue > safeMin && (
+    !hasItemisedEvidence || numericValue > itemisedMinimum
+  )
+  const needsReconciliation = sourceTotalUnknown || totalNotFullyItemised
+  const stepperStateClass = itemisedExceedsTotal
+    ? "border-red-300 bg-red-50 focus-within:ring-red-500/20"
+    : needsReconciliation
+      ? "border-amber-300 bg-amber-50 focus-within:ring-amber-500/25"
+      : "border-slate-200 bg-white focus-within:ring-amber-500/25"
+  const stepperStateLabel = itemisedExceedsTotal
+    ? "Below itemised"
+    : sourceTotalUnknown
+      ? "Set total"
+      : totalNotFullyItemised
+        ? "Not itemised"
+        : undefined
 
   const step = (delta: number) => {
     const base = numericValue ?? (delta > 0 ? safeMin : safeMin + 1)
@@ -1635,6 +1702,15 @@ function NumberStepperField({
         </Label>
         <div className="flex items-center gap-2">
           {isLocked && <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">Locked</span>}
+          {stepperStateLabel && (
+            <span
+              className={`text-[10px] font-semibold uppercase tracking-wide ${
+                itemisedExceedsTotal ? "text-red-600" : "text-amber-600"
+              }`}
+            >
+              {stepperStateLabel}
+            </span>
+          )}
           {isDirty && (
             <button
               type="button"
@@ -1650,7 +1726,7 @@ function NumberStepperField({
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <div className="inline-flex h-9 min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm focus-within:ring-2 focus-within:ring-amber-500/25">
+        <div className={`inline-flex h-9 min-w-0 flex-1 overflow-hidden rounded-lg border shadow-sm focus-within:ring-2 ${stepperStateClass}`}>
           <button
             type="button"
             className="flex w-9 items-center justify-center border-r border-slate-200 text-base font-semibold text-slate-500 transition hover:bg-amber-50 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-40"
@@ -1829,14 +1905,14 @@ function NumberSegmentSelect({
         {label && <Label className="text-xs font-medium text-slate-700">{label}</Label>}
         {warning && <span className="text-[10px] font-medium uppercase tracking-wide text-amber-600">{warning}</span>}
       </div>
-      <div className="inline-flex h-9 w-fit max-w-full justify-self-start overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div className="flex w-full flex-wrap overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
         {options.map((option) => {
           const active = value === option
           return (
             <button
               key={option}
               type="button"
-              className={`min-w-11 border-r border-slate-200 px-3 text-sm font-medium transition last:border-r-0 disabled:cursor-not-allowed disabled:opacity-50 ${
+              className={`h-9 min-w-10 flex-1 border-r border-b border-slate-200 px-2 text-sm font-medium transition last:border-r-0 disabled:cursor-not-allowed disabled:opacity-50 ${
                 active
                   ? warning
                     ? "bg-amber-50 text-amber-700"
@@ -2043,7 +2119,8 @@ export const EnhancedAddPlaythroughForm = ({ game, players, onSubmit, onCancel }
 
     setLoading(true)
     try {
-      const derivedResults = deriveResultSet(results, { defaultBaseVp: results.length === 4 ? 1 : 0 })
+      const normalisedResults = results.map(syncSpiceMustFlowForForm)
+      const derivedResults = deriveResultSet(normalisedResults, { defaultBaseVp: normalisedResults.length === 4 ? 1 : 0 })
       const resultsWithPlayerIds = derivedResults.map((result, index) => {
         const existingPlayer = players.find((player) => player.name.toLowerCase() === result.playerName.trim().toLowerCase())
         const derivedResult = withDerivedStats(result, derivedResults, index)
@@ -2160,6 +2237,7 @@ export const EnhancedAddPlaythroughForm = ({ game, players, onSubmit, onCancel }
     const commanderSkillsFloor = countAcquisitions(acquisitions, "sardaukar_skill")
     const conflictCardsFloor = countAcquisitions(acquisitions, "conflict_card", ["won"])
     const deckCardsTotal = countAcquisitionsForTypes(acquisitions, ["imperium_card", "reserve_card", "starter_card"])
+    const deckCardsInFinalDeckFloor = countAcquisitionsForTypes(acquisitions, ["imperium_card", "reserve_card", "starter_card"], ["in_final_deck"])
     const deckCardsTrashedFloor = countAcquisitionsForTypes(acquisitions, ["imperium_card", "reserve_card", "starter_card"], ["trashed"])
     const navigationCardsFloor = countAcquisitions(acquisitions, "navigation_card", ["played"])
     const showVpSources = Boolean(showVpSourcesByPlayer[index])
@@ -2219,7 +2297,7 @@ export const EnhancedAddPlaythroughForm = ({ game, players, onSubmit, onCancel }
           />
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             <NumberField id={`vp-base-${index}`} label="Base VP" value={results.length === 4 ? 1 : 0} onChange={() => {}} disabled lockedReason={results.length === 4 ? "4-player setup starts on 1" : "setup starts on 0 outside 4-player games"} />
-            <NumberStepperField id={`vp-conflict-${index}`} label="Conflict reward VP" value={result.vpSourcesConflictCards} resetValue={conflictRewardSourceVp || undefined} onChange={(value) => updatePlayer(index, "vpSourcesConflictCards", value)} disabled={loading} />
+            <NumberStepperField id={`vp-conflict-${index}`} label="Conflict reward VP" value={result.vpSourcesConflictCards} resetValue={conflictRewardSourceVp || undefined} onChange={(value) => updatePlayer(index, "vpSourcesConflictCards", value)} disabled={loading} reconcileWithTrackedItems />
             <NumberStepperField
               id={`vp-battle-icons-${index}`}
               label="Battle icon VP"
@@ -2229,12 +2307,12 @@ export const EnhancedAddPlaythroughForm = ({ game, players, onSubmit, onCancel }
               onChange={(value) => updatePlayer(index, "vpSourcesBattleIconMatches", battleIconBreakdown.hasInputs && value === undefined ? battleIconBreakdown.battleIconVp : value)}
               disabled={loading}
             />
-            <NumberStepperField id={`smf-vp-${index}`} label="Spice Must Flow VP" value={result.vpSourcesSpiceMustFlow} resetValue={spiceMustFlowSourceVp || undefined} onChange={(value) => updatePlayer(index, "vpSourcesSpiceMustFlow", value)} disabled={loading} />
-            <NumberStepperField id={`vp-intrigue-${index}`} label="Intrigue VP" value={result.vpSourcesIntrigueCards} resetValue={intrigueSourceVp || undefined} onChange={(value) => updatePlayer(index, "vpSourcesIntrigueCards", value)} disabled={loading} lockedReason={getNumericLockReason(result, "vpSourcesIntrigueCards")} />
-            <NumberStepperField id={`vp-tech-${index}`} label="Tech tile VP" value={result.vpSourcesTechTiles} resetValue={techSourceVp || undefined} onChange={(value) => updatePlayer(index, "vpSourcesTechTiles", value)} disabled={loading} lockedReason={getNumericLockReason(result, "vpSourcesTechTiles")} />
-            <NumberStepperField id={`vp-imperium-${index}`} label="Imperium card VP" value={result.vpSourcesImperiumCards} resetValue={deckCardSourceVp || undefined} onChange={(value) => updatePlayer(index, "vpSourcesImperiumCards", value)} disabled={loading} />
+            <NumberStepperField id={`smf-vp-${index}`} label="Spice Must Flow VP" value={result.vpSourcesSpiceMustFlow} resetValue={spiceMustFlowSourceVp || undefined} onChange={(value) => updatePlayer(index, "vpSourcesSpiceMustFlow", value)} disabled={loading} reconcileWithTrackedItems />
+            <NumberStepperField id={`vp-intrigue-${index}`} label="Intrigue VP" value={result.vpSourcesIntrigueCards} resetValue={intrigueSourceVp || undefined} onChange={(value) => updatePlayer(index, "vpSourcesIntrigueCards", value)} disabled={loading} lockedReason={getNumericLockReason(result, "vpSourcesIntrigueCards")} reconcileWithTrackedItems />
+            <NumberStepperField id={`vp-tech-${index}`} label="Tech tile VP" value={result.vpSourcesTechTiles} resetValue={techSourceVp || undefined} onChange={(value) => updatePlayer(index, "vpSourcesTechTiles", value)} disabled={loading} lockedReason={getNumericLockReason(result, "vpSourcesTechTiles")} reconcileWithTrackedItems />
+            <NumberStepperField id={`vp-imperium-${index}`} label="Imperium card VP" value={result.vpSourcesImperiumCards} resetValue={deckCardSourceVp || undefined} onChange={(value) => updatePlayer(index, "vpSourcesImperiumCards", value)} disabled={loading} reconcileWithTrackedItems />
             {isSteersman && (
-              <NumberStepperField id={`vp-leader-${index}`} label="Leader ability VP" value={result.vpSourcesLeaderAbilities} resetValue={leaderSourceVp || undefined} onChange={(value) => updatePlayer(index, "vpSourcesLeaderAbilities", value)} disabled={loading} max={1} />
+              <NumberStepperField id={`vp-leader-${index}`} label="Leader ability VP" value={result.vpSourcesLeaderAbilities} resetValue={leaderSourceVp || undefined} onChange={(value) => updatePlayer(index, "vpSourcesLeaderAbilities", value)} disabled={loading} max={1} reconcileWithTrackedItems />
             )}
           </div>
           <VpRail
@@ -2281,7 +2359,7 @@ export const EnhancedAddPlaythroughForm = ({ game, players, onSubmit, onCancel }
                 placeholder="Search VP deck card..."
                 emptyText="No scoring deck cards added yet."
                 allowedItemTypes={["imperium_card", "reserve_card", "starter_card"]}
-                summaryCount={summaryTotal(result.vpSourcesImperiumCards, result.vpSourcesSpiceMustFlow)}
+                summaryCount={result.vpSourcesImperiumCards}
                 unlistedLabel="VP not itemised"
                 enableVpControls
                 vpOnly
@@ -2515,8 +2593,8 @@ export const EnhancedAddPlaythroughForm = ({ game, players, onSubmit, onCancel }
             <LightSubsection title="Contracts">
               <div className="grid gap-3">
                 <div className="flex flex-wrap gap-4">
-                  <NumberStepperField id={`contracts-completed-${index}`} label="Completed" value={result.contractsCompletedCount} resetValue={contractCompletedFloor || undefined} onChange={(value) => updatePlayer(index, "contractsCompletedCount", value)} disabled={loading} />
-                  <NumberStepperField id={`contracts-held-${index}`} label="Held" value={result.contractsHeldIncomplete} resetValue={contractHeldFloor || undefined} onChange={(value) => updatePlayer(index, "contractsHeldIncomplete", value)} disabled={loading} />
+                  <NumberStepperField id={`contracts-completed-${index}`} label="Completed" value={result.contractsCompletedCount} resetValue={contractCompletedFloor || undefined} onChange={(value) => updatePlayer(index, "contractsCompletedCount", value)} disabled={loading} reconcileWithTrackedItems />
+                  <NumberStepperField id={`contracts-held-${index}`} label="Held" value={result.contractsHeldIncomplete} resetValue={contractHeldFloor || undefined} onChange={(value) => updatePlayer(index, "contractsHeldIncomplete", value)} disabled={loading} reconcileWithTrackedItems />
                 </div>
                 <AcquisitionsEditor
                   title="Tracked contracts"
@@ -2524,7 +2602,7 @@ export const EnhancedAddPlaythroughForm = ({ game, players, onSubmit, onCancel }
                   emptyText="No contracts added yet."
                   allowedItemTypes={["contract"]}
                   summaryCount={summaryTotal(result.contractsCompletedCount, result.contractsHeldIncomplete)}
-                  unlistedLabel="unlisted contract"
+                  unlistedLabel="contract not itemised"
                   value={result.acquisitions}
                   onChange={(value) => updatePlayer(index, "acquisitions", value)}
                   disabled={loading}
@@ -2534,14 +2612,14 @@ export const EnhancedAddPlaythroughForm = ({ game, players, onSubmit, onCancel }
             </LightSubsection>
             <LightSubsection title="Tech tiles">
               <div className="grid gap-3">
-                <NumberStepperField id={`tech-tiles-count-${index}`} label="Count" value={result.techTilesCount} resetValue={techTilesFloor || undefined} onChange={(value) => updatePlayer(index, "techTilesCount", value)} disabled={loading} />
+                <NumberStepperField id={`tech-tiles-count-${index}`} label="Count" value={result.techTilesCount} resetValue={techTilesFloor || undefined} onChange={(value) => updatePlayer(index, "techTilesCount", value)} disabled={loading} reconcileWithTrackedItems />
                 <AcquisitionsEditor
                   title="Tracked tech tiles"
                   placeholder="Search Tech tile..."
                   emptyText="No Tech tiles added yet."
                   allowedItemTypes={["tech_tile"]}
                   summaryCount={result.techTilesCount}
-                  unlistedLabel="unlisted tile"
+                  unlistedLabel="tech tile not itemised"
                   enableVpControls
                   value={result.acquisitions}
                   onChange={(value) => updatePlayer(index, "acquisitions", value)}
@@ -2552,14 +2630,14 @@ export const EnhancedAddPlaythroughForm = ({ game, players, onSubmit, onCancel }
             </LightSubsection>
             <LightSubsection title="Commander skills">
               <div className="grid gap-3">
-                <NumberStepperField id={`commander-skills-count-${index}`} label="Count" value={result.commanderSkillsCount} resetValue={commanderSkillsFloor || undefined} onChange={(value) => updatePlayer(index, "commanderSkillsCount", value)} disabled={loading} />
+                <NumberStepperField id={`commander-skills-count-${index}`} label="Count" value={result.commanderSkillsCount} resetValue={commanderSkillsFloor || undefined} onChange={(value) => updatePlayer(index, "commanderSkillsCount", value)} disabled={loading} reconcileWithTrackedItems />
                 <AcquisitionsEditor
                   title="Tracked commander skills"
                   placeholder="Search Commander skill..."
                   emptyText="No Commander skills added yet."
                   allowedItemTypes={["sardaukar_skill"]}
                   summaryCount={result.commanderSkillsCount}
-                  unlistedLabel="unlisted skill"
+                  unlistedLabel="commander skill not itemised"
                   value={result.acquisitions}
                   onChange={(value) => updatePlayer(index, "acquisitions", value)}
                   disabled={loading}
@@ -2575,8 +2653,8 @@ export const EnhancedAddPlaythroughForm = ({ game, players, onSubmit, onCancel }
             <LightSubsection title="Deck composition">
               <div className="grid gap-3">
                 <div className="flex flex-wrap gap-4">
-                  {renderNumber(index, result, "finalDeckSize", "Size")}
-                  <NumberStepperField id={`cards-trashed-${index}`} label="Trashed" value={result.cardsTrashedCount} resetValue={deckCardsTrashedFloor || undefined} onChange={(value) => updatePlayer(index, "cardsTrashedCount", value)} disabled={loading} />
+                  <NumberStepperField id={`final-deck-size-${index}`} label="Size" value={result.finalDeckSize} resetValue={deckCardsInFinalDeckFloor || undefined} onChange={(value) => updatePlayer(index, "finalDeckSize", value)} disabled={loading} reconcileWithTrackedItems />
+                  <NumberStepperField id={`cards-trashed-${index}`} label="Trashed" value={result.cardsTrashedCount} resetValue={deckCardsTrashedFloor || undefined} onChange={(value) => updatePlayer(index, "cardsTrashedCount", value)} disabled={loading} reconcileWithTrackedItems />
                 </div>
                 <AcquisitionsEditor
                   title="Tracked deck cards"
@@ -2584,7 +2662,7 @@ export const EnhancedAddPlaythroughForm = ({ game, players, onSubmit, onCancel }
                   emptyText="No deck cards added yet."
                   allowedItemTypes={["imperium_card", "reserve_card", "starter_card"]}
                   summaryCount={deckCardsTotal}
-                  unlistedLabel="unlisted card"
+                  unlistedLabel="card not itemised"
                   enableVpControls
                   value={result.acquisitions}
                   onChange={(value) => updatePlayer(index, "acquisitions", value)}
@@ -2595,14 +2673,14 @@ export const EnhancedAddPlaythroughForm = ({ game, players, onSubmit, onCancel }
             </LightSubsection>
             <LightSubsection title="Conflicts">
               <div className="grid gap-3">
-                <NumberStepperField id={`conflicts-won-${index}`} label="Conflicts won" value={result.conflictCardsWonCount} resetValue={conflictCardsFloor || undefined} onChange={(value) => updatePlayer(index, "conflictCardsWonCount", value)} disabled={loading} />
+                <NumberStepperField id={`conflicts-won-${index}`} label="Conflicts won" value={result.conflictCardsWonCount} resetValue={conflictCardsFloor || undefined} onChange={(value) => updatePlayer(index, "conflictCardsWonCount", value)} disabled={loading} reconcileWithTrackedItems />
                 <AcquisitionsEditor
                   title="Conflict cards won"
                   placeholder="Search Conflict card..."
                   emptyText="No Conflict cards added yet."
                   allowedItemTypes={["conflict_card"]}
                   summaryCount={result.conflictCardsWonCount}
-                  unlistedLabel="unlisted conflict"
+                  unlistedLabel="conflict not itemised"
                   value={result.acquisitions}
                   onChange={(value) => updatePlayer(index, "acquisitions", value)}
                   disabled={loading}
@@ -2614,8 +2692,8 @@ export const EnhancedAddPlaythroughForm = ({ game, players, onSubmit, onCancel }
             <LightSubsection title="Intrigue">
               <div className="grid gap-3">
                 <div className="flex flex-wrap gap-4">
-                  <NumberStepperField id={`intrigue-played-${index}`} label="Played" value={result.intrigueCardsPlayed} resetValue={intriguePlayedFloor || undefined} onChange={(value) => updatePlayer(index, "intrigueCardsPlayed", value)} disabled={loading} />
-                  <NumberStepperField id={`intrigue-held-${index}`} label="Held" value={result.intrigueCardsHeldEndgame} resetValue={intrigueHeldFloor || undefined} onChange={(value) => updatePlayer(index, "intrigueCardsHeldEndgame", value)} disabled={loading} />
+                  <NumberStepperField id={`intrigue-played-${index}`} label="Played" value={result.intrigueCardsPlayed} resetValue={intriguePlayedFloor || undefined} onChange={(value) => updatePlayer(index, "intrigueCardsPlayed", value)} disabled={loading} reconcileWithTrackedItems />
+                  <NumberStepperField id={`intrigue-held-${index}`} label="Held" value={result.intrigueCardsHeldEndgame} resetValue={intrigueHeldFloor || undefined} onChange={(value) => updatePlayer(index, "intrigueCardsHeldEndgame", value)} disabled={loading} reconcileWithTrackedItems />
                 </div>
                 <AcquisitionsEditor
                   title="Tracked intrigues"
@@ -2623,7 +2701,7 @@ export const EnhancedAddPlaythroughForm = ({ game, players, onSubmit, onCancel }
                   emptyText="No Intrigue cards added yet."
                   allowedItemTypes={["intrigue_card"]}
                   summaryCount={summaryTotal(result.intrigueCardsPlayed, result.intrigueCardsHeldEndgame)}
-                  unlistedLabel="unlisted intrigue"
+                  unlistedLabel="intrigue not itemised"
                   enableVpControls
                   value={result.acquisitions}
                   onChange={(value) => updatePlayer(index, "acquisitions", value)}
@@ -2644,7 +2722,7 @@ export const EnhancedAddPlaythroughForm = ({ game, players, onSubmit, onCancel }
               emptyText="No Navigation cards added yet."
               allowedItemTypes={["navigation_card"]}
               summaryCount={navigationCardsFloor}
-              unlistedLabel="unlisted navigation"
+              unlistedLabel="navigation card not itemised"
               enableVpControls
               value={result.acquisitions}
               onChange={(value) => updatePlayer(index, "acquisitions", value)}

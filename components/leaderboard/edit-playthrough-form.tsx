@@ -328,17 +328,33 @@ function syncConflictVpForFinalConflictChange<T extends Record<string, any>>(pre
   return updated
 }
 
+function itemisedVpMinimum(result: Record<string, any>, itemTypes: AcquisitionItemType[]): number {
+  return sumAcquisitionVp(result.acquisitions ?? [], itemTypes)
+}
+
+function effectiveVpSourceTotal(result: Record<string, any>, value: number | null | undefined, itemTypes: AcquisitionItemType[]): number {
+  return Math.max(numericValue(value), itemisedVpMinimum(result, itemTypes))
+}
+
+function effectiveIntrigueVpSourceTotal(result: Record<string, any>): number {
+  return Math.max(numericValue(result.vpSourcesIntrigueCards), sumSupportedIntrigueVp(result))
+}
+
 function calculateKnownVp(result: Record<string, any>): number {
   return (
     numericValue(result.vpSourcesBase) +
     calculateFactionVp(result) +
-    numericValue(result.vpSourcesConflictCards) +
+    effectiveVpSourceTotal(result, result.vpSourcesConflictCards, ["conflict_card"]) +
     numericValue(result.vpSourcesBattleIconMatches) +
     numericValue(result.vpSourcesSpiceMustFlow) +
-    numericValue(result.vpSourcesIntrigueCards) +
-    numericValue(result.vpSourcesTechTiles) +
-    numericValue(result.vpSourcesImperiumCards) +
-    numericValue(isSteersmanLeader(result) ? result.vpSourcesLeaderAbilities : undefined)
+    effectiveIntrigueVpSourceTotal(result) +
+    effectiveVpSourceTotal(result, result.vpSourcesTechTiles, ["tech_tile"]) +
+    effectiveVpSourceTotal(result, result.vpSourcesImperiumCards, ["imperium_card", "reserve_card", "starter_card"]) +
+    numericValue(
+      isSteersmanLeader(result)
+        ? Math.max(numericValue(result.vpSourcesLeaderAbilities), itemisedVpMinimum(result, ["navigation_card"]))
+        : undefined,
+    )
   )
 }
 
@@ -385,7 +401,7 @@ function getAcquisitionsFromResult(result: any): PlaythroughResultAcquisitionInp
     deckId: item.deckId ?? item.deck_id,
     source: item.source,
     acquisitionCount: getNumber(item, "acquisitionCount", "acquisition_count") ?? 1,
-    itemStatus: item.itemStatus ?? item.item_status ?? item.acquisitionMethod ?? item.acquisition_method,
+    itemStatus: item.itemStatus ?? item.item_status ?? undefined,
     vpCount: getNumber(item, "vpCount", "vp_count"),
     entrySource: item.entrySource ?? item.entry_source ?? "manual",
     notes: item.notes,
@@ -399,7 +415,7 @@ function acquisitionCount(item: PlaythroughResultAcquisitionInput): number {
 }
 
 function acquisitionStatus(item: PlaythroughResultAcquisitionInput): AcquisitionItemStatus | undefined {
-  return item.itemStatus ?? item.item_status ?? (item.acquisitionMethod as AcquisitionItemStatus | undefined)
+  return item.itemStatus ?? item.item_status ?? undefined
 }
 
 function hasAcquisitionType(items: PlaythroughResultAcquisitionInput[], itemType: AcquisitionItemType): boolean {
@@ -445,11 +461,23 @@ function syncSummaryCount(
   previousFloor: number,
   nextFloor: number,
 ): number | undefined {
+  void previousValue
+  void previousFloor
+  void nextFloor
+
+  // Count summaries are partial-record totals. Itemised rows are evidence,
+  // not proof that the full count is known.
+  return validNumber(currentValue)
+}
+
+function syncStrictSummaryCount(
+  currentValue: number | undefined,
+  previousValue: number | undefined,
+  previousFloor: number,
+  nextFloor: number,
+): number | undefined {
   const current = validNumber(currentValue)
 
-  // Treat the first itemised entry as a helpful default, but preserve explicit
-  // manual values afterwards. This lets a user keep a summary count unset or 0
-  // when they only itemised a partial record of the game.
   if (typeof current === "number") {
     if (previousFloor > 0 && current === previousFloor && nextFloor !== previousFloor) {
       return nextFloor > 0 ? nextFloor : undefined
@@ -581,9 +609,14 @@ function syncStrengthSummaryField(
   const previousSum = sumAcquisitionStrength(previousAcquisitions, itemTypes)
   const nextSum = sumAcquisitionStrength(acquisitions, itemTypes)
 
-  if (nextHasTrackedItems) return nextSum
-
   const current = validNumber(currentValue)
+
+  if (nextHasTrackedItems) {
+    // As with VP, itemised strength is a known minimum, not necessarily
+    // the complete source total.
+    return current
+  }
+
   if (previousHadTrackedItems && current === previousSum) return undefined
   return current
 }
@@ -667,6 +700,21 @@ function syncSpiceMustFlowAcquisitionFromVp(
   return [...withoutSmf, { ...base, acquisitionCount: count }]
 }
 
+function syncSpiceMustFlowForForm<T extends { acquisitions?: PlaythroughResultAcquisitionInput[] | null; vpSourcesSpiceMustFlow?: number }>(
+  result: T,
+): T {
+  const acquisitions = result.acquisitions ?? []
+  const summaryValue = validNumber(result.vpSourcesSpiceMustFlow)
+  const itemCount = countSpiceMustFlowAcquisitions(acquisitions)
+  const vpCount = typeof summaryValue === "number" ? summaryValue : itemCount > 0 ? itemCount : undefined
+
+  return {
+    ...result,
+    vpSourcesSpiceMustFlow: vpCount,
+    acquisitions: syncSpiceMustFlowAcquisitionFromVp(acquisitions, vpCount),
+  }
+}
+
 function syncVpSummaryField(
   previousAcquisitions: PlaythroughResultAcquisitionInput[],
   acquisitions: PlaythroughResultAcquisitionInput[],
@@ -678,11 +726,25 @@ function syncVpSummaryField(
   const nextHasTrackedItems = hasVpTrackedAcquisitions(acquisitions, itemTypes)
   const previousSum = sumAcquisitionVp(previousAcquisitions, itemTypes)
   const nextSum = sumAcquisitionVp(acquisitions, itemTypes)
-
-  if (nextHasTrackedItems) return nextSum
-
+  const previous = validNumber(previousValue)
   const current = validNumber(currentValue)
-  if (previousHadTrackedItems && current === previousSum) return undefined
+
+  if (nextHasTrackedItems) {
+    // Tracked items are evidence, not proof that the whole source total is known.
+    // Leave blank totals blank so partial itemisation can be represented as:
+    // itemised VP known, source total unknown.
+    return current
+  }
+
+  if (
+    previousHadTrackedItems &&
+    typeof previous === "number" &&
+    previous === previousSum &&
+    current === previousSum
+  ) {
+    return undefined
+  }
+
   return current
 }
 
@@ -696,23 +758,8 @@ function syncAcquisitionSummaryFields<T extends PlayerRankInput>(previous: Playe
     acquisitionsChanged && (hasAcquisitionType(previousAcquisitions, itemType) || hasAcquisitionType(acquisitions, itemType))
 
   if (shouldSync("imperium_card") || shouldSync("reserve_card") || shouldSync("starter_card")) {
-    const previousTrashedFloor = countAcquisitionsForTypes(previousAcquisitions, ["imperium_card", "reserve_card", "starter_card"], ["trashed"])
-    const nextTrashedFloor = countAcquisitionsForTypes(acquisitions, ["imperium_card", "reserve_card", "starter_card"], ["trashed"])
-    next.cardsTrashedCount = syncSummaryCount(
-      next.cardsTrashedCount,
-      previous.cardsTrashedCount,
-      previousTrashedFloor,
-      nextTrashedFloor,
-    )
-
-    const previousDeckFloor = countAcquisitionsForTypes(previousAcquisitions, ["imperium_card", "reserve_card", "starter_card"], ["in_final_deck"])
-    const nextDeckFloor = countAcquisitionsForTypes(acquisitions, ["imperium_card", "reserve_card", "starter_card"], ["in_final_deck"])
-    next.finalDeckSize = syncSummaryCount(
-      next.finalDeckSize,
-      previous.finalDeckSize,
-      previousDeckFloor,
-      nextDeckFloor,
-    )
+    // Deck size and trashed count are summary totals, not safe to infer from
+    // partial itemised card records. Preserve unset/manual values.
   }
 
   if (shouldSync("contract")) {
@@ -865,7 +912,7 @@ function syncAcquisitionSummaryFields<T extends PlayerRankInput>(previous: Playe
     const previousSmfCount = countSpiceMustFlowAcquisitions(previousAcquisitions)
     const nextSmfCount = countSpiceMustFlowAcquisitions(acquisitions)
     if (previousSmfCount > 0 || nextSmfCount > 0) {
-      next.vpSourcesSpiceMustFlow = syncSummaryCount(
+      next.vpSourcesSpiceMustFlow = syncStrictSummaryCount(
         next.vpSourcesSpiceMustFlow,
         previous.vpSourcesSpiceMustFlow,
         previousSmfCount,
@@ -946,13 +993,6 @@ function withStarterDeckDefaults<T extends Record<string, any>>(result: T): T {
   if (acquisitions === result.acquisitions) return result
 
   const next: Record<string, any> = { ...result, acquisitions }
-  if (isBlankValue(next.finalDeckSize)) {
-    next.finalDeckSize = countAcquisitionsForTypes(acquisitions, ["starter_card"], ["in_final_deck"])
-  }
-  if (isBlankValue(next.cardsTrashedCount)) {
-    next.cardsTrashedCount = countAcquisitionsForTypes(acquisitions, ["starter_card"], ["trashed"])
-  }
-
   return next as T
 }
 
@@ -1408,7 +1448,7 @@ function VpRail({ result, playerCount, action }: { result: Record<string, any>; 
       key: "conflict",
       label: "Conflict rewards",
       shortLabel: "CR",
-      count: positiveInt(result.vpSourcesConflictCards),
+      count: positiveInt(effectiveVpSourceTotal(result, result.vpSourcesConflictCards, ["conflict_card"])),
       className: "border-orange-300 bg-orange-50 text-orange-800",
       title: "Conflict reward VP",
     },
@@ -1432,7 +1472,7 @@ function VpRail({ result, playerCount, action }: { result: Record<string, any>; 
       key: "intrigue",
       label: "Intrigue",
       shortLabel: "I",
-      count: positiveInt(result.vpSourcesIntrigueCards),
+      count: positiveInt(effectiveIntrigueVpSourceTotal(result)),
       className: "border-purple-300 bg-purple-50 text-purple-800",
       title: "Intrigue card VP",
     },
@@ -1440,7 +1480,7 @@ function VpRail({ result, playerCount, action }: { result: Record<string, any>; 
       key: "tech",
       label: "Tech",
       shortLabel: "T",
-      count: positiveInt(result.vpSourcesTechTiles),
+      count: positiveInt(effectiveVpSourceTotal(result, result.vpSourcesTechTiles, ["tech_tile"])),
       className: "border-cyan-300 bg-cyan-50 text-cyan-800",
       title: "Tech tile VP",
     },
@@ -1448,7 +1488,7 @@ function VpRail({ result, playerCount, action }: { result: Record<string, any>; 
       key: "imperium",
       label: "Deck cards",
       shortLabel: "Deck",
-      count: positiveInt(result.vpSourcesImperiumCards),
+      count: positiveInt(effectiveVpSourceTotal(result, result.vpSourcesImperiumCards, ["imperium_card", "reserve_card", "starter_card"])),
       className: "border-blue-300 bg-blue-50 text-blue-800",
       title: "Imperium/Reserve card VP",
     },
@@ -1456,7 +1496,7 @@ function VpRail({ result, playerCount, action }: { result: Record<string, any>; 
       key: "leader",
       label: "Leader",
       shortLabel: "L",
-      count: positiveInt(isSteersmanLeader(result) ? result.vpSourcesLeaderAbilities : undefined),
+      count: positiveInt(isSteersmanLeader(result) ? Math.max(numericValue(result.vpSourcesLeaderAbilities), itemisedVpMinimum(result, ["navigation_card"])) : undefined),
       className: "border-indigo-300 bg-indigo-50 text-indigo-800",
       title: "Leader ability VP",
     },
@@ -1554,6 +1594,7 @@ function NumberField({
   lockedReason,
   widthClass = "max-w-48",
   resetValue,
+  reconcileWithTrackedItems = false,
 }: {
   id: string
   label?: string
@@ -1564,6 +1605,7 @@ function NumberField({
   lockedReason?: string
   widthClass?: string
   resetValue?: number
+  reconcileWithTrackedItems?: boolean
 }) {
   const isLocked = Boolean(lockedReason)
   const numericValue = typeof value === "number" && Number.isFinite(value) ? Math.trunc(value) : undefined
@@ -1618,6 +1660,7 @@ function NumberStepperField({
   max,
   lockedReason,
   resetValue,
+  reconcileWithTrackedItems = false,
 }: {
   id: string
   label?: string
@@ -1630,6 +1673,7 @@ function NumberStepperField({
   max?: number
   lockedReason?: string
   resetValue?: number
+  reconcileWithTrackedItems?: boolean
 }) {
   const safeMin = Math.max(0, Math.trunc(min))
   const isLocked = Boolean(lockedReason)
@@ -1639,6 +1683,29 @@ function NumberStepperField({
     ? Math.max(safeMin, Math.trunc(resetValue))
     : safeMin
   const isDirty = !isLocked && numericValue !== undefined && numericValue !== resetTarget
+  const itemisedMinimum = typeof resetValue === "number" && Number.isFinite(resetValue)
+    ? Math.max(safeMin, Math.trunc(resetValue))
+    : undefined
+  const hasItemisedEvidence = itemisedMinimum !== undefined && itemisedMinimum > safeMin
+  const canShowReconciliation = reconcileWithTrackedItems && !isLocked
+  const sourceTotalUnknown = canShowReconciliation && numericValue === undefined && hasItemisedEvidence
+  const itemisedExceedsTotal = canShowReconciliation && numericValue !== undefined && hasItemisedEvidence && numericValue < itemisedMinimum
+  const totalNotFullyItemised = canShowReconciliation && numericValue !== undefined && numericValue > safeMin && (
+    !hasItemisedEvidence || numericValue > itemisedMinimum
+  )
+  const needsReconciliation = sourceTotalUnknown || totalNotFullyItemised
+  const stepperStateClass = itemisedExceedsTotal
+    ? "border-red-300 bg-red-50 focus-within:ring-red-500/20"
+    : needsReconciliation
+      ? "border-amber-300 bg-amber-50 focus-within:ring-amber-500/25"
+      : "border-slate-200 bg-white focus-within:ring-amber-500/25"
+  const stepperStateLabel = itemisedExceedsTotal
+    ? "Below itemised"
+    : sourceTotalUnknown
+      ? "Set total"
+      : totalNotFullyItemised
+        ? "Not itemised"
+        : undefined
 
   const step = (delta: number) => {
     const base = numericValue ?? (delta > 0 ? safeMin : safeMin + 1)
@@ -1666,6 +1733,15 @@ function NumberStepperField({
         </Label>
         <div className="flex items-center gap-2">
           {isLocked && <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">Locked</span>}
+          {stepperStateLabel && (
+            <span
+              className={`text-[10px] font-semibold uppercase tracking-wide ${
+                itemisedExceedsTotal ? "text-red-600" : "text-amber-600"
+              }`}
+            >
+              {stepperStateLabel}
+            </span>
+          )}
           {isDirty && (
             <button
               type="button"
@@ -1681,7 +1757,7 @@ function NumberStepperField({
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <div className="inline-flex h-9 min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm focus-within:ring-2 focus-within:ring-amber-500/25">
+        <div className={`inline-flex h-9 min-w-0 flex-1 overflow-hidden rounded-lg border shadow-sm focus-within:ring-2 ${stepperStateClass}`}>
           <button
             type="button"
             className="flex w-9 items-center justify-center border-r border-slate-200 text-base font-semibold text-slate-500 transition hover:bg-amber-50 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-40"
@@ -1853,14 +1929,14 @@ function NumberSegmentSelect({
         {label && <Label className="text-xs font-medium text-slate-700">{label}</Label>}
         {warning && <span className="text-[10px] font-medium uppercase tracking-wide text-amber-600">{warning}</span>}
       </div>
-      <div className="inline-flex h-9 w-fit max-w-full justify-self-start overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div className="flex w-full flex-wrap overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
         {options.map((option) => {
           const active = value === option
           return (
             <button
               key={option}
               type="button"
-              className={`min-w-11 border-r border-slate-200 px-3 text-sm font-medium transition last:border-r-0 disabled:cursor-not-allowed disabled:opacity-50 ${
+              className={`h-9 min-w-10 flex-1 border-r border-b border-slate-200 px-2 text-sm font-medium transition last:border-r-0 disabled:cursor-not-allowed disabled:opacity-50 ${
                 active
                   ? warning
                     ? "bg-amber-50 text-amber-700"
@@ -1902,8 +1978,37 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
   const [archetypes, setArchetypes] = useState<any[]>([])
   const [leadersLoading, setLeadersLoading] = useState(true)
   const [expandedPlayerId, setExpandedPlayerId] = useState<string | null>(null)
+  const [showStickyPlayerContext, setShowStickyPlayerContext] = useState(false)
   const [showVpSourcesByPlayer, setShowVpSourcesByPlayer] = useState<Record<number, boolean>>({})
   const [showStrengthSourcesByPlayer, setShowStrengthSourcesByPlayer] = useState<Record<number, boolean>>({})
+
+  useEffect(() => {
+    if (!expandedPlayerId) {
+      setShowStickyPlayerContext(false)
+      return
+    }
+
+    const updateStickyContext = () => {
+      const anchor = Array.from(document.querySelectorAll<HTMLElement>("[data-expanded-player-anchor]"))
+        .find((element) => element.dataset.expandedPlayerAnchor === expandedPlayerId)
+
+      if (!anchor) {
+        setShowStickyPlayerContext(false)
+        return
+      }
+
+      setShowStickyPlayerContext(anchor.getBoundingClientRect().bottom <= 0)
+    }
+
+    updateStickyContext()
+    window.addEventListener("scroll", updateStickyContext, { passive: true })
+    window.addEventListener("resize", updateStickyContext)
+
+    return () => {
+      window.removeEventListener("scroll", updateStickyContext)
+      window.removeEventListener("resize", updateStickyContext)
+    }
+  }, [expandedPlayerId])
 
   const globalAcquisitionCounts = useMemo(() => {
     return playerRanks.reduce<Record<string, number>>((acc, result) => {
@@ -1983,10 +2088,10 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
         notes: getText(result, "notes"),
       }))
 
-    const initialRanksWithStarters = initialRanks.map((result: PlayerRankInput) => withStarterDeckDefaults(result))
+    const initialRanksWithStarters = initialRanks.map((result: PlayerRankInput) => syncSpiceMustFlowForForm(withStarterDeckDefaults(result)))
     const derivedInitialRanks = deriveResultSet(initialRanksWithStarters, { defaultBaseVp: initialRanksWithStarters.length === 4 ? 1 : 0 }) as PlayerRankInput[]
     setPlayerRanks(derivedInitialRanks)
-    setExpandedPlayerId((current) => current ?? derivedInitialRanks[0]?.id ?? null)
+    setExpandedPlayerId(null)
   }, [playthrough, existingPlayers])
 
   useEffect(() => {
@@ -2168,7 +2273,8 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
 
     setSubmitting(true)
     try {
-      const derivedResults = deriveResultSet(results, { defaultBaseVp: results.length === 4 ? 1 : 0 }) as PlayerRankInput[]
+      const normalisedResults = results.map(syncSpiceMustFlowForForm)
+      const derivedResults = deriveResultSet(normalisedResults, { defaultBaseVp: normalisedResults.length === 4 ? 1 : 0 }) as PlayerRankInput[]
 
       await onSubmit(
         derivedResults.map((result, index) => {
@@ -2243,6 +2349,7 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
     const commanderSkillsFloor = countAcquisitions(acquisitions, "sardaukar_skill")
     const conflictCardsFloor = countAcquisitions(acquisitions, "conflict_card", ["won"])
     const deckCardsTotal = countAcquisitionsForTypes(acquisitions, ["imperium_card", "reserve_card", "starter_card"])
+    const deckCardsInFinalDeckFloor = countAcquisitionsForTypes(acquisitions, ["imperium_card", "reserve_card", "starter_card"], ["in_final_deck"])
     const deckCardsTrashedFloor = countAcquisitionsForTypes(acquisitions, ["imperium_card", "reserve_card", "starter_card"], ["trashed"])
     const navigationCardsFloor = countAcquisitions(acquisitions, "navigation_card", ["played"])
     const showVpSources = Boolean(showVpSourcesByPlayer[index])
@@ -2259,13 +2366,6 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
 
     return (
       <div className="mt-4 grid gap-4 rounded-xl bg-slate-50 p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h4 className="text-sm font-semibold">Advanced Stats</h4>
-          </div>
-          {hasAdvancedData(player) && <Badge variant="secondary">Has data</Badge>}
-        </div>
-
         <StatSection title="Outcome and setup" icon={Trophy}>
           <div className="grid gap-3 sm:grid-cols-[minmax(0,14rem)_minmax(0,18rem)_minmax(0,1fr)]">
             <NumberField id={`score-${index}`} label="Final VP" value={player.score} onChange={(value) => updateField(index, "score", value)} disabled={submitting} widthClass="max-w-64" />
@@ -2296,7 +2396,7 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
           />
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             <NumberField id={`edit-vp-base-${index}`} label="Base VP" value={playerRanks.length === 4 ? 1 : 0} onChange={() => {}} disabled lockedReason={playerRanks.length === 4 ? "4-player setup starts on 1" : "setup starts on 0 outside 4-player games"} />
-            <NumberStepperField id={`edit-vp-conflict-${index}`} label="Conflict reward VP" value={player.vpSourcesConflictCards} resetValue={conflictRewardSourceVp || undefined} onChange={(value) => updateField(index, "vpSourcesConflictCards", value as any)} disabled={submitting} />
+            <NumberStepperField id={`edit-vp-conflict-${index}`} label="Conflict reward VP" value={player.vpSourcesConflictCards} resetValue={conflictRewardSourceVp || undefined} onChange={(value) => updateField(index, "vpSourcesConflictCards", value as any)} disabled={submitting} reconcileWithTrackedItems />
             <NumberStepperField
               id={`edit-vp-battle-icons-${index}`}
               label="Battle icon VP"
@@ -2306,12 +2406,12 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
               onChange={(value) => updateField(index, "vpSourcesBattleIconMatches", (battleIconBreakdown.hasInputs && value === undefined ? battleIconBreakdown.battleIconVp : value) as any)}
               disabled={submitting}
             />
-            <NumberStepperField id={`edit-smf-vp-${index}`} label="Spice Must Flow VP" value={player.vpSourcesSpiceMustFlow} resetValue={spiceMustFlowSourceVp || undefined} onChange={(value) => updateField(index, "vpSourcesSpiceMustFlow", value as any)} disabled={submitting} />
-            <NumberStepperField id={`edit-vp-intrigue-${index}`} label="Intrigue VP" value={player.vpSourcesIntrigueCards} resetValue={intrigueSourceVp || undefined} onChange={(value) => updateField(index, "vpSourcesIntrigueCards", value as any)} disabled={submitting} lockedReason={getNumericLockReason(player, "vpSourcesIntrigueCards")} />
-            <NumberStepperField id={`edit-vp-tech-${index}`} label="Tech tile VP" value={player.vpSourcesTechTiles} resetValue={techSourceVp || undefined} onChange={(value) => updateField(index, "vpSourcesTechTiles", value as any)} disabled={submitting} lockedReason={getNumericLockReason(player, "vpSourcesTechTiles")} />
-            <NumberStepperField id={`edit-vp-imperium-${index}`} label="Imperium card VP" value={player.vpSourcesImperiumCards} resetValue={deckCardSourceVp || undefined} onChange={(value) => updateField(index, "vpSourcesImperiumCards", value as any)} disabled={submitting} />
+            <NumberStepperField id={`edit-smf-vp-${index}`} label="Spice Must Flow VP" value={player.vpSourcesSpiceMustFlow} resetValue={spiceMustFlowSourceVp || undefined} onChange={(value) => updateField(index, "vpSourcesSpiceMustFlow", value as any)} disabled={submitting} reconcileWithTrackedItems />
+            <NumberStepperField id={`edit-vp-intrigue-${index}`} label="Intrigue VP" value={player.vpSourcesIntrigueCards} resetValue={intrigueSourceVp || undefined} onChange={(value) => updateField(index, "vpSourcesIntrigueCards", value as any)} disabled={submitting} lockedReason={getNumericLockReason(player, "vpSourcesIntrigueCards")} reconcileWithTrackedItems />
+            <NumberStepperField id={`edit-vp-tech-${index}`} label="Tech tile VP" value={player.vpSourcesTechTiles} resetValue={techSourceVp || undefined} onChange={(value) => updateField(index, "vpSourcesTechTiles", value as any)} disabled={submitting} lockedReason={getNumericLockReason(player, "vpSourcesTechTiles")} reconcileWithTrackedItems />
+            <NumberStepperField id={`edit-vp-imperium-${index}`} label="Imperium card VP" value={player.vpSourcesImperiumCards} resetValue={deckCardSourceVp || undefined} onChange={(value) => updateField(index, "vpSourcesImperiumCards", value as any)} disabled={submitting} reconcileWithTrackedItems />
             {isSteersman && (
-              <NumberStepperField id={`edit-vp-leader-${index}`} label="Leader ability VP" value={player.vpSourcesLeaderAbilities} resetValue={leaderSourceVp || undefined} onChange={(value) => updateField(index, "vpSourcesLeaderAbilities", value as any)} disabled={submitting} max={1} />
+              <NumberStepperField id={`edit-vp-leader-${index}`} label="Leader ability VP" value={player.vpSourcesLeaderAbilities} resetValue={leaderSourceVp || undefined} onChange={(value) => updateField(index, "vpSourcesLeaderAbilities", value as any)} disabled={submitting} max={1} reconcileWithTrackedItems />
             )}
           </div>
           <VpRail
@@ -2358,7 +2458,7 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
                 placeholder="Search VP deck card..."
                 emptyText="No scoring deck cards added yet."
                 allowedItemTypes={["imperium_card", "reserve_card", "starter_card"]}
-                summaryCount={summaryTotal(player.vpSourcesImperiumCards, player.vpSourcesSpiceMustFlow)}
+                summaryCount={player.vpSourcesImperiumCards}
                 unlistedLabel="VP not itemised"
                 enableVpControls
                 vpOnly
@@ -2592,8 +2692,8 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
             <LightSubsection title="Contracts">
               <div className="grid gap-3">
                 <div className="flex flex-wrap gap-4">
-                  <NumberStepperField id={`edit-contracts-completed-${index}`} label="Completed" value={player.contractsCompletedCount} resetValue={contractCompletedFloor || undefined} onChange={(value) => updateField(index, "contractsCompletedCount", value as any)} disabled={submitting} />
-                  <NumberStepperField id={`edit-contracts-held-${index}`} label="Held" value={player.contractsHeldIncomplete} resetValue={contractHeldFloor || undefined} onChange={(value) => updateField(index, "contractsHeldIncomplete", value as any)} disabled={submitting} />
+                  <NumberStepperField id={`edit-contracts-completed-${index}`} label="Completed" value={player.contractsCompletedCount} resetValue={contractCompletedFloor || undefined} onChange={(value) => updateField(index, "contractsCompletedCount", value as any)} disabled={submitting} reconcileWithTrackedItems />
+                  <NumberStepperField id={`edit-contracts-held-${index}`} label="Held" value={player.contractsHeldIncomplete} resetValue={contractHeldFloor || undefined} onChange={(value) => updateField(index, "contractsHeldIncomplete", value as any)} disabled={submitting} reconcileWithTrackedItems />
                 </div>
                 <AcquisitionsEditor
                   title="Tracked contracts"
@@ -2601,7 +2701,7 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
                   emptyText="No contracts added yet."
                   allowedItemTypes={["contract"]}
                   summaryCount={summaryTotal(player.contractsCompletedCount, player.contractsHeldIncomplete)}
-                  unlistedLabel="unlisted contract"
+                  unlistedLabel="contract not itemised"
                   value={player.acquisitions}
                   onChange={(value) => updateField(index, "acquisitions", value as any)}
                   disabled={submitting}
@@ -2611,14 +2711,14 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
             </LightSubsection>
             <LightSubsection title="Tech tiles">
               <div className="grid gap-3">
-                <NumberStepperField id={`edit-tech-tiles-count-${index}`} label="Count" value={player.techTilesCount} resetValue={techTilesFloor || undefined} onChange={(value) => updateField(index, "techTilesCount", value as any)} disabled={submitting} />
+                <NumberStepperField id={`edit-tech-tiles-count-${index}`} label="Count" value={player.techTilesCount} resetValue={techTilesFloor || undefined} onChange={(value) => updateField(index, "techTilesCount", value as any)} disabled={submitting} reconcileWithTrackedItems />
                 <AcquisitionsEditor
                   title="Tracked tech tiles"
                   placeholder="Search Tech tile..."
                   emptyText="No Tech tiles added yet."
                   allowedItemTypes={["tech_tile"]}
                   summaryCount={player.techTilesCount}
-                  unlistedLabel="unlisted tile"
+                  unlistedLabel="tech tile not itemised"
                   enableVpControls
                   value={player.acquisitions}
                   onChange={(value) => updateField(index, "acquisitions", value as any)}
@@ -2629,14 +2729,14 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
             </LightSubsection>
             <LightSubsection title="Commander skills">
               <div className="grid gap-3">
-                <NumberStepperField id={`edit-commander-skills-count-${index}`} label="Count" value={player.commanderSkillsCount} resetValue={commanderSkillsFloor || undefined} onChange={(value) => updateField(index, "commanderSkillsCount", value as any)} disabled={submitting} />
+                <NumberStepperField id={`edit-commander-skills-count-${index}`} label="Count" value={player.commanderSkillsCount} resetValue={commanderSkillsFloor || undefined} onChange={(value) => updateField(index, "commanderSkillsCount", value as any)} disabled={submitting} reconcileWithTrackedItems />
                 <AcquisitionsEditor
                   title="Tracked commander skills"
                   placeholder="Search Commander skill..."
                   emptyText="No Commander skills added yet."
                   allowedItemTypes={["sardaukar_skill"]}
                   summaryCount={player.commanderSkillsCount}
-                  unlistedLabel="unlisted skill"
+                  unlistedLabel="commander skill not itemised"
                   value={player.acquisitions}
                   onChange={(value) => updateField(index, "acquisitions", value as any)}
                   disabled={submitting}
@@ -2652,8 +2752,8 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
             <LightSubsection title="Deck composition">
               <div className="grid gap-3">
                 <div className="flex flex-wrap gap-4">
-                  {renderNumber(index, player, "finalDeckSize", "Size")}
-                  <NumberStepperField id={`edit-cards-trashed-${index}`} label="Trashed" value={player.cardsTrashedCount} resetValue={deckCardsTrashedFloor || undefined} onChange={(value) => updateField(index, "cardsTrashedCount", value as any)} disabled={submitting} />
+                  <NumberStepperField id={`edit-final-deck-size-${index}`} label="Size" value={player.finalDeckSize} resetValue={deckCardsInFinalDeckFloor || undefined} onChange={(value) => updateField(index, "finalDeckSize", value as any)} disabled={submitting} reconcileWithTrackedItems />
+                  <NumberStepperField id={`edit-cards-trashed-${index}`} label="Trashed" value={player.cardsTrashedCount} resetValue={deckCardsTrashedFloor || undefined} onChange={(value) => updateField(index, "cardsTrashedCount", value as any)} disabled={submitting} reconcileWithTrackedItems />
                 </div>
                 <AcquisitionsEditor
                   title="Tracked deck cards"
@@ -2661,7 +2761,7 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
                   emptyText="No deck cards added yet."
                   allowedItemTypes={["imperium_card", "reserve_card", "starter_card"]}
                   summaryCount={deckCardsTotal}
-                  unlistedLabel="unlisted card"
+                  unlistedLabel="card not itemised"
                   enableVpControls
                   value={player.acquisitions}
                   onChange={(value) => updateField(index, "acquisitions", value as any)}
@@ -2672,14 +2772,14 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
             </LightSubsection>
             <LightSubsection title="Conflicts">
               <div className="grid gap-3">
-                <NumberStepperField id={`edit-conflicts-won-${index}`} label="Conflicts won" value={player.conflictCardsWonCount} resetValue={conflictCardsFloor || undefined} onChange={(value) => updateField(index, "conflictCardsWonCount", value as any)} disabled={submitting} />
+                <NumberStepperField id={`edit-conflicts-won-${index}`} label="Conflicts won" value={player.conflictCardsWonCount} resetValue={conflictCardsFloor || undefined} onChange={(value) => updateField(index, "conflictCardsWonCount", value as any)} disabled={submitting} reconcileWithTrackedItems />
                 <AcquisitionsEditor
                   title="Conflict cards won"
                   placeholder="Search Conflict card..."
                   emptyText="No Conflict cards added yet."
                   allowedItemTypes={["conflict_card"]}
                   summaryCount={player.conflictCardsWonCount}
-                  unlistedLabel="unlisted conflict"
+                  unlistedLabel="conflict not itemised"
                   value={player.acquisitions}
                   onChange={(value) => updateField(index, "acquisitions", value as any)}
                   disabled={submitting}
@@ -2691,8 +2791,8 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
             <LightSubsection title="Intrigue">
               <div className="grid gap-3">
                 <div className="flex flex-wrap gap-4">
-                  <NumberStepperField id={`edit-intrigue-played-${index}`} label="Played" value={player.intrigueCardsPlayed} resetValue={intriguePlayedFloor || undefined} onChange={(value) => updateField(index, "intrigueCardsPlayed", value as any)} disabled={submitting} />
-                  <NumberStepperField id={`edit-intrigue-held-${index}`} label="Held" value={player.intrigueCardsHeldEndgame} resetValue={intrigueHeldFloor || undefined} onChange={(value) => updateField(index, "intrigueCardsHeldEndgame", value as any)} disabled={submitting} />
+                  <NumberStepperField id={`edit-intrigue-played-${index}`} label="Played" value={player.intrigueCardsPlayed} resetValue={intriguePlayedFloor || undefined} onChange={(value) => updateField(index, "intrigueCardsPlayed", value as any)} disabled={submitting} reconcileWithTrackedItems />
+                  <NumberStepperField id={`edit-intrigue-held-${index}`} label="Held" value={player.intrigueCardsHeldEndgame} resetValue={intrigueHeldFloor || undefined} onChange={(value) => updateField(index, "intrigueCardsHeldEndgame", value as any)} disabled={submitting} reconcileWithTrackedItems />
                 </div>
                 <AcquisitionsEditor
                   title="Tracked intrigues"
@@ -2700,7 +2800,7 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
                   emptyText="No Intrigue cards added yet."
                   allowedItemTypes={["intrigue_card"]}
                   summaryCount={summaryTotal(player.intrigueCardsPlayed, player.intrigueCardsHeldEndgame)}
-                  unlistedLabel="unlisted intrigue"
+                  unlistedLabel="intrigue not itemised"
                   enableVpControls
                   value={player.acquisitions}
                   onChange={(value) => updateField(index, "acquisitions", value as any)}
@@ -2721,7 +2821,7 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
               emptyText="No Navigation cards added yet."
               allowedItemTypes={["navigation_card"]}
               summaryCount={navigationCardsFloor}
-              unlistedLabel="unlisted navigation"
+              unlistedLabel="navigation card not itemised"
               enableVpControls
               value={player.acquisitions}
               onChange={(value) => updateField(index, "acquisitions", value as any)}
@@ -2847,20 +2947,85 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
 
                   {playthrough?.game_type === "dune" && (
                     <div className="mt-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="w-full justify-between rounded-lg border-slate-200 bg-white/80 hover:bg-amber-50"
-                        onClick={() => setExpandedPlayerId(isExpanded ? null : playerRank.id)}
-                        disabled={submitting}
-                      >
-                        <span className="flex items-center gap-2">
-                          {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                          {isExpanded ? "Close editor" : "Open full editor"}
-                        </span>
-                        {hasAdvancedData(playerRank) && <Badge variant="secondary">Has data</Badge>}
-                      </Button>
+                      {isExpanded ? (
+                        <>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            data-expanded-player-anchor={playerRank.id}
+                            className="w-full justify-between rounded-lg border-slate-200 bg-white/80 hover:bg-amber-50"
+                            onClick={() => setExpandedPlayerId(null)}
+                            disabled={submitting}
+                          >
+                            <span className="flex items-center gap-2">
+                              <ChevronDown className="h-4 w-4" />
+                              Close editor
+                            </span>
+                            {hasAdvancedData(playerRank) && <Badge variant="secondary">Has data</Badge>}
+                          </Button>
+
+                          {showStickyPlayerContext && (
+                            <div className="sticky top-0 z-30 -mx-4 mt-3 border-b border-amber-300 bg-amber-50/95 px-4 py-3 shadow-md ring-1 ring-amber-200/80 backdrop-blur">
+                              <div className="flex flex-wrap items-center gap-3 border-l-4 border-amber-500 pl-3">
+                                <button
+                                  type="button"
+                                  className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                                  onClick={() => setExpandedPlayerId(null)}
+                                  disabled={submitting}
+                                >
+                                  <ChevronDown className="h-4 w-4 shrink-0 text-amber-700" />
+                                  <span className="truncate text-sm font-semibold text-slate-950">
+                                    {playerRank.playerName || `Player ${index + 1}`}
+                                  </span>
+                                </button>
+
+                                <Badge variant="outline" className="shrink-0 border-amber-300 bg-white text-amber-800">
+                                  Rank {playerRank.rank || index + 1}
+                                </Badge>
+
+                                {playerRank.leaderName && (
+                                  <span className="min-w-0 max-w-[14rem] truncate text-sm text-slate-600">
+                                    {playerRank.leaderName}
+                                  </span>
+                                )}
+
+                                {hasAdvancedData(playerRank) && (
+                                  <Badge variant="secondary" className="shrink-0">
+                                    Has data
+                                  </Badge>
+                                )}
+
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 shrink-0 text-slate-700 hover:bg-amber-100"
+                                  onClick={() => setExpandedPlayerId(null)}
+                                  disabled={submitting}
+                                >
+                                  Close editor
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-between rounded-lg border-slate-200 bg-white/80 hover:bg-amber-50"
+                          onClick={() => setExpandedPlayerId(playerRank.id)}
+                          disabled={submitting}
+                        >
+                          <span className="flex items-center gap-2">
+                            <ChevronRight className="h-4 w-4" />
+                            Open full editor
+                          </span>
+                          {hasAdvancedData(playerRank) && <Badge variant="secondary">Has data</Badge>}
+                        </Button>
+                      )}
                       {isExpanded && renderAdvanced(playerRank, index)}
                     </div>
                   )}
@@ -2869,8 +3034,10 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
             })}
           </div>
 
-          <div className="flex items-center justify-between">
-            <Button type="button" variant="outline" size="sm" onClick={addPlayerField} disabled={submitting}>
+          <div className="sticky bottom-0 z-30 -mx-6 -mb-6 mt-6 border-t border-slate-200 bg-white/95 px-6 py-4 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex justify-end gap-2 sm:ml-auto">
+              <Button type="button" variant="outline" size="sm" onClick={addPlayerField} disabled={submitting}>
               <PlusCircle className="mr-2 h-4 w-4" /> Add Player
             </Button>
             <div className="flex gap-2">
@@ -2885,6 +3052,8 @@ export const EditPlaythroughForm = ({ playthrough, existingPlayers, onSubmit, on
                 )}
               </Button>
             </div>
+          </div>
+        </div>
           </div>
 
           {error && <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">{error}</div>}
